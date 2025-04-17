@@ -7,148 +7,219 @@ use App\Models\Complaint;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
+    private $complaintTypes = [
+        'retard_livraison',
+        'retard_chargement',
+        'marchandise_endommagée',
+        'mauvais_comportement',
+        'autre'
+    ];
+
+    private $urgencyLevels = [
+        'critique',
+        'élevé',
+        'moyen',
+        'faible'
+    ];
+
     public function index(Request $request)
     {
-        $period = $request->get('period', 'week');
-        $startDate = $this->getStartDate($period);
+        $period = $request->get('period', 'total');
+        $type = $request->get('type');
+        $urgency = $request->get('urgency');
+        $status = $request->get('status');
+        $date = $request->get('date');
 
-        // Get complaints statistics
-        $statistics = $this->getStatistics($startDate);
+        $query = Complaint::query();
 
-        // Get chart data
-        $chartData = $this->getChartData($startDate, $period);
+        // Apply filters
+        if ($type) {
+            $query->where('complaint_type', $type);
+        }
+        if ($urgency) {
+            $query->where('urgency_level', $urgency);
+        }
+        if ($status) {
+            $query->where('status', $status);
+        }
+        if ($date) {
+            $query->whereDate('created_at', $date);
+        }
 
-        // Get complaint types distribution for donut chart
-        $typeDistribution = $this->getComplaintTypesDistribution($startDate);
+        // Get statistics based on filtered data
+        $statistics = $this->getStatistics($period, $query->clone());
+        $chartData = $this->getChartData($period, $query->clone());
+        $typeDistribution = $this->getComplaintTypesDistribution($query->clone());
 
-        // Get recent complaints
-        $recentComplaints = Complaint::latest()
-            ->take(10)
-            ->get();
+        // Get recent complaints with filters
+        $recentComplaints = $query->latest()
+            ->with('assignedUser')
+            ->paginate(10);
 
-        return view('admin.dashboard', array_merge(
-            $statistics,
-            $chartData,
-            [
-                'recentComplaints' => $recentComplaints,
-                'typeDistribution' => $typeDistribution
-            ]
-        ));
+        return view('admin.dashboard', compact(
+            'statistics',
+            'chartData',
+            'typeDistribution',
+            'recentComplaints'
+        ))->with([
+            'complaintTypes' => $this->complaintTypes,
+            'urgencyLevels' => $this->urgencyLevels
+        ]);
     }
 
     private function getStartDate($period)
     {
-        return match($period) {
+        return match ($period) {
             'week' => now()->subWeek(),
             'month' => now()->subMonth(),
             'year' => now()->subYear(),
+            'total' => now()->subYears(10), // A large enough range to get all records
             default => now()->subWeek(),
         };
     }
 
-    private function getStatistics($startDate)
+    private function getStatistics($period, $query)
     {
-        $total = Complaint::where('created_at', '>=', $startDate)->count();
-        $solved = Complaint::where('created_at', '>=', $startDate)
-            ->where('status', 'résolu')
-            ->count();
-        $waiting = Complaint::where('created_at', '>=', $startDate)
-            ->where('status', 'en_attente')
-            ->count();
-        $unsolved = Complaint::where('created_at', '>=', $startDate)
-            ->where('status', 'non_résolu')
-            ->count();
+        $startDate = $this->getStartDate($period);
+
+        $total = $query->clone()->where('created_at', '>=', $startDate)->count();
+        $resolved = $query->clone()->where('created_at', '>=', $startDate)
+            ->where('status', 'résolu')->count();
+        $waiting = $query->clone()->where('created_at', '>=', $startDate)
+            ->where('status', 'en_attente')->count();
+        $unresolved = $query->clone()->where('created_at', '>=', $startDate)
+            ->where('status', 'non_résolu')->count();
 
         return [
-            'totalCount' => $total,
-            'solvedCount' => $solved,
-            'waitingCount' => $waiting,
-            'unsolvedCount' => $unsolved,
-            'solvedPercentage' => $total > 0 ? round(($solved / $total) * 100) : 0,
-            'waitingPercentage' => $total > 0 ? round(($waiting / $total) * 100) : 0,
-            'unsolvedPercentage' => $total > 0 ? round(($unsolved / $total) * 100) : 0,
+            'total' => $total,
+            'resolved' => $resolved,
+            'waiting' => $waiting,
+            'unresolved' => $unresolved,
+            'resolved_percentage' => $total > 0 ? round(($resolved / $total) * 100) : 0,
+            'waiting_percentage' => $total > 0 ? round(($waiting / $total) * 100) : 0,
+            'unresolved_percentage' => $total > 0 ? round(($unresolved / $total) * 100) : 0,
         ];
     }
 
-    private function getChartData($startDate, $period)
+    private function getChartData($period, $query)
     {
-        $format = match($period) {
-            'week' => '%Y-%m-%d',
-            'month' => '%Y-%m-%d',
-            'year' => '%Y-%m',
-            default => '%Y-%m-%d',
+        $startDate = $this->getStartDate($period);
+        $groupBy = match ($period) {
+            'week' => 'date',
+            'month' => 'date',
+            'year' => 'month',
+            'total' => 'month',
+            default => 'date',
         };
 
-        $complaints = Complaint::select([
-            DB::raw("DATE_FORMAT(created_at, '$format') as date"),
-            DB::raw('COUNT(*) as total'),
-            DB::raw("SUM(CASE WHEN status = 'résolu' THEN 1 ELSE 0 END) as solved"),
-            DB::raw("SUM(CASE WHEN status = 'en_attente' THEN 1 ELSE 0 END) as waiting"),
-            DB::raw("SUM(CASE WHEN status = 'non_résolu' THEN 1 ELSE 0 END) as unsolved"),
-        ])
-        ->where('created_at', '>=', $startDate)
-        ->groupBy('date')
-        ->orderBy('date')
-        ->get();
+        if ($groupBy === 'month') {
+            $complaints = $query->where('created_at', '>=', $startDate)
+                ->selectRaw('YEAR(created_at) as year')
+                ->selectRaw('MONTH(created_at) as month')
+                ->selectRaw('status')
+                ->selectRaw('COUNT(*) as count')
+                ->groupBy('year', 'month', 'status')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get();
+
+            $dates = $complaints->map(function ($item) {
+                return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
+            })->unique()->sort()->values();
+
+            $labels = $dates->map(function ($date) {
+                return Carbon::createFromFormat('Y-m', $date)->format('F Y');
+            });
+        } else {
+            $complaints = $query->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as date')
+                ->selectRaw('status')
+                ->selectRaw('COUNT(*) as count')
+                ->groupBy('date', 'status')
+                ->orderBy('date')
+                ->get();
+
+            $dates = $complaints->pluck('date')->unique()->sort()->values();
+            $labels = $dates->map(function ($date) {
+                return Carbon::createFromFormat('Y-m-d', $date)->format('d/m/Y');
+            });
+        }
+
+        $datasets = [
+            [
+                'label' => 'Résolues',
+                'backgroundColor' => '#28a745',
+                'data' => $this->getDatasetValues($dates, $complaints, 'résolu', $groupBy),
+            ],
+            [
+                'label' => 'En attente',
+                'backgroundColor' => '#ffc107',
+                'data' => $this->getDatasetValues($dates, $complaints, 'en_attente', $groupBy),
+            ],
+            [
+                'label' => 'Non résolues',
+                'backgroundColor' => '#dc3545',
+                'data' => $this->getDatasetValues($dates, $complaints, 'non_résolu', $groupBy),
+            ],
+        ];
 
         return [
-            'chartLabels' => $complaints->pluck('date')->toArray(),
-            'chartData' => [
-                [
-                    'label' => 'Résolues',
-                    'data' => $complaints->pluck('solved')->toArray(),
-                    'backgroundColor' => 'rgba(40, 167, 69, 0.2)',
-                    'borderColor' => 'rgb(40, 167, 69)',
-                    'borderWidth' => 1
-                ],
-                [
-                    'label' => 'En attente',
-                    'data' => $complaints->pluck('waiting')->toArray(),
-                    'backgroundColor' => 'rgba(255, 193, 7, 0.2)',
-                    'borderColor' => 'rgb(255, 193, 7)',
-                    'borderWidth' => 1
-                ],
-                [
-                    'label' => 'Non résolues',
-                    'data' => $complaints->pluck('unsolved')->toArray(),
-                    'backgroundColor' => 'rgba(220, 53, 69, 0.2)',
-                    'borderColor' => 'rgb(220, 53, 69)',
-                    'borderWidth' => 1
-                ]
-            ]
+            'labels' => $labels,
+            'datasets' => $datasets,
         ];
     }
 
-    private function getComplaintTypesDistribution($startDate)
+    private function getDatasetValues($dates, $complaints, $status, $groupBy)
     {
-        $types = Complaint::select('complaint_type', DB::raw('count(*) as total'))
-            ->where('created_at', '>=', $startDate)
+        if ($groupBy === 'month') {
+            return $dates->map(function ($date) use ($complaints, $status) {
+                list($year, $month) = explode('-', $date);
+                return $complaints->where('year', $year)
+                    ->where('month', $month)
+                    ->where('status', $status)
+                    ->sum('count');
+            });
+        }
+
+        return $dates->map(function ($date) use ($complaints, $status) {
+            return $complaints->where('date', $date)
+                ->where('status', $status)
+                ->sum('count');
+        });
+    }
+
+    private function getComplaintTypesDistribution($query)
+    {
+        $types = $query->selectRaw('complaint_type, COUNT(*) as count')
             ->groupBy('complaint_type')
             ->get();
 
-        $labels = [
-            'retard_livraison' => 'Retard de livraison',
-            'retard_chargement' => 'Retard de chargement',
-            'marchandise_endommagée' => 'Marchandise endommagée',
-            'mauvais_comportement' => 'Mauvais comportement',
-            'autre' => 'Autre'
+        $colors = [
+            'retard_livraison' => '#4e73df',
+            'retard_chargement' => '#1cc88a',
+            'marchandise_endommagée' => '#36b9cc',
+            'mauvais_comportement' => '#f6c23e',
+            'autre' => '#858796',
         ];
 
-        $colors = [
-            'rgba(54, 162, 235, 0.8)',
-            'rgba(255, 99, 132, 0.8)',
-            'rgba(255, 206, 86, 0.8)',
-            'rgba(75, 192, 192, 0.8)',
-            'rgba(153, 102, 255, 0.8)'
-        ];
+        $labels = $types->map(function ($type) {
+            return match ($type->complaint_type) {
+                'retard_livraison' => 'Retard de livraison',
+                'retard_chargement' => 'Retard de chargement',
+                'marchandise_endommagée' => 'Marchandise endommagée',
+                'mauvais_comportement' => 'Mauvais comportement',
+                default => 'Autre',
+            };
+        });
 
         return [
-            'labels' => $types->map(fn($type) => $labels[$type->complaint_type])->toArray(),
-            'data' => $types->pluck('total')->toArray(),
-            'backgroundColor' => array_slice($colors, 0, $types->count())
+            'labels' => $labels,
+            'data' => $types->pluck('count'),
+            'backgroundColor' => $types->map(fn($type) => $colors[$type->complaint_type] ?? '#858796'),
         ];
     }
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .text { font-family: Arial, sans-serif; font-weight: bold; }
+        .ship { fill: #4e73df; }
+    </style>
+    <g transform="translate(10,10)">
+        <path class="ship" d="M0,20 L10,20 L15,15 L60,15 L65,20 L80,20 L80,25 L0,25 Z"/>
+        <path class="ship" d="M20,15 L20,5 L50,5 L50,15 Z"/>
+        <text x="90" y="23" class="text" fill="#4e73df">TUNISHIP</text>
+    </g>
+</svg>

@@ -12,20 +12,25 @@
             --sidebar-collapsed-width: 60px;
         }
 
+        body {
+            overflow-x: hidden;
+        }
+
         .sidebar {
             position: fixed;
             top: 0;
             bottom: 0;
-            left: calc(-1 * (var(--sidebar-width) - var(--sidebar-collapsed-width)));
+            left: 0;
             width: var(--sidebar-width);
             padding: 20px 0;
             background-color: #2c3e50;
             transition: all 0.3s ease;
             z-index: 100;
+            transform: translateX(calc(-1 * (var(--sidebar-width) - var(--sidebar-collapsed-width))));
         }
 
         .sidebar:hover {
-            left: 0;
+            transform: translateX(0);
         }
 
         .sidebar .nav-link {
@@ -56,6 +61,8 @@
             margin-left: var(--sidebar-collapsed-width);
             padding: 20px;
             transition: all 0.3s ease;
+            min-height: 100vh;
+            width: calc(100% - var(--sidebar-collapsed-width));
         }
 
         .sidebar-title {
@@ -72,14 +79,26 @@
 
         @media (max-width: 768px) {
             .sidebar {
-                left: -250px;
+                transform: translateX(-250px);
             }
             .sidebar:hover {
-                left: 0;
+                transform: translateX(0);
             }
             .main-content {
                 margin-left: 0;
+                width: 100%;
             }
+        }
+
+        /* Fix table responsiveness */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Ensure cards don't overflow */
+        .card {
+            overflow: hidden;
         }
     </style>
 </head>
@@ -101,15 +120,18 @@
                     <a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
                         <i class="fas fa-truck"></i> Prestataires
                     </a>
-                    <a href="{{ route('admin.transporters.index') }}" class="nav-link {{ request()->routeIs('admin.transporters.*') ? 'active' : '' }}">
-                        <i class="fas fa-shipping-fast"></i> Transporteurs
-                    </a>
                     <a href="{{ route('admin.evaluations.index') }}" class="nav-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
                         <i class="fas fa-star"></i> Évaluations
                     </a>
                     <a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
                         <i class="fas fa-chart-line"></i> KPIs
                     </a>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Gestion des Utilisateurs</p>
+                        </a>
+                    </li>
                     <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                         <i class="fas fa-sign-out-alt"></i> Déconnexion
                     </a>

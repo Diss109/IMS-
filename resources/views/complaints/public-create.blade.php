@@ -151,6 +151,10 @@
                                         <div><span class="red-flag">🚩</span><span class="red-flag">🚩</span><span class="red-flag">🚩</span></div>
                                         <div>Élevé</div>
                                     </div>
+                                    <div class="urgency-option" data-value="critical">
+                                        <div><span class="red-flag">🚩</span><span class="red-flag">🚩</span><span class="red-flag">🚩</span><span class="red-flag">🚩</span></div>
+                                        <div>Critique</div>
+                                    </div>
                                 </div>
                                 <input type="hidden" name="urgency_level" id="urgency_level" required>
                                 @error('urgency_level')

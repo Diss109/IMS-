@@ -2,99 +2,178 @@
 
 @section('content')
 <div class="container-fluid">
-    <h1 class="mb-4">Tableau de bord</h1>
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Tableau de bord</h1>
+        <img src="{{ asset('images/logo.jpg') }}" alt="Tuniship Logo" height="80" class="d-none d-md-block">
+    </div>
 
-    <!-- Period Filter -->
-    <div class="card mb-4">
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Réclamations</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['total'] }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Résolues</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['resolved'] }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">En Attente</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['waiting'] }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Non Résolues</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['unresolved'] }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Filtres</h6>
+        </div>
         <div class="card-body">
-            <form method="GET" class="d-flex gap-3">
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="period" id="week" value="week"
-                        {{ request('period', 'week') === 'week' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="week">Cette semaine</label>
+            <form id="filterForm" class="row">
+                <div class="col-md-2 mb-3">
+                    <label for="period">Période</label>
+                    <select class="form-control" id="period" name="period">
+                        <option value="total">Total</option>
+                        <option value="week">Cette semaine</option>
+                        <option value="month">Ce mois</option>
+                        <option value="year">Cette année</option>
+                    </select>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="period" id="month" value="month"
-                        {{ request('period') === 'month' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="month">Ce mois</label>
+                <div class="col-md-2 mb-3">
+                    <label for="type">Type</label>
+                    <select class="form-control" id="type" name="type">
+                        <option value="">Tous</option>
+                        @foreach($complaintTypes as $type)
+                            <option value="{{ $type }}">
+                                @switch($type)
+                                    @case('retard_livraison')
+                                        Retard de livraison
+                                        @break
+                                    @case('retard_chargement')
+                                        Retard de chargement
+                                        @break
+                                    @case('marchandise_endommagée')
+                                        Marchandise endommagée
+                                        @break
+                                    @case('mauvais_comportement')
+                                        Mauvais comportement
+                                        @break
+                                    @default
+                                        Autre
+                                @endswitch
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="period" id="year" value="year"
-                        {{ request('period') === 'year' ? 'checked' : '' }}>
-                    <label class="form-check-label" for="year">Cette année</label>
+                <div class="col-md-2 mb-3">
+                    <label for="urgency">Urgence</label>
+                    <select class="form-control" id="urgency" name="urgency">
+                        <option value="">Toutes</option>
+                        @foreach($urgencyLevels as $level)
+                            <option value="{{ $level }}">
+                                @switch($level)
+                                    @case('critique')
+                                        Critique
+                                        @break
+                                    @case('élevé')
+                                        Élevé
+                                        @break
+                                    @case('moyen')
+                                        Moyen
+                                        @break
+                                    @default
+                                        Faible
+                                @endswitch
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+                <div class="col-md-2 mb-3">
+                    <label for="status">Statut</label>
+                    <select class="form-control" id="status" name="status">
+                        <option value="">Tous</option>
+                        <option value="résolu">Résolu</option>
+                        <option value="en_attente">En attente</option>
+                        <option value="non_résolu">Non résolu</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>Date</label>
+                    <input type="date" class="form-control" id="date" name="date">
+                </div>
+                <div class="col-md-1 mb-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Total des réclamations</h5>
-                    <h2 class="mb-0">{{ $totalCount }}</h2>
-                </div>
-            </div>
+    <!-- Recent Complaints Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Réclamations récentes</h6>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Résolues</h5>
-                    <h2 class="mb-0">{{ $solvedCount }} ({{ $solvedPercentage }}%)</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5 class="card-title">En attente</h5>
-                    <h2 class="mb-0">{{ $waitingCount }} ({{ $waitingPercentage }}%)</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Non résolues</h5>
-                    <h2 class="mb-0">{{ $unsolvedCount }} ({{ $unsolvedPercentage }}%)</h2>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Évolution des réclamations</h5>
-                    <canvas id="complaintsChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Types de réclamations</h5>
-                    <canvas id="typesChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Complaints -->
-    <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Réclamations récentes</h5>
             <div class="table-responsive">
                 <table class="table table-hover">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
                             <th>ID</th>
                             <th>Entreprise</th>
                             <th>Type</th>
+                            <th>Urgence</th>
                             <th>Statut</th>
                             <th>Date</th>
                             <th>Actions</th>
@@ -105,7 +184,39 @@
                             <tr>
                                 <td>{{ $complaint->id }}</td>
                                 <td>{{ $complaint->company_name }}</td>
-                                <td>{{ __("complaints.types.{$complaint->complaint_type}") }}</td>
+                                <td>
+                                    @switch($complaint->complaint_type)
+                                        @case('retard_livraison')
+                                            Retard de livraison
+                                            @break
+                                        @case('retard_chargement')
+                                            Retard de chargement
+                                            @break
+                                        @case('marchandise_endommagée')
+                                            Marchandise endommagée
+                                            @break
+                                        @case('mauvais_comportement')
+                                            Mauvais comportement
+                                            @break
+                                        @default
+                                            Autre
+                                    @endswitch
+                                </td>
+                                <td>
+                                    @switch($complaint->urgency_level)
+                                        @case('critique')
+                                            <span class="badge bg-dark">Critique</span>
+                                            @break
+                                        @case('élevé')
+                                            <span class="badge bg-danger">Élevé</span>
+                                            @break
+                                        @case('moyen')
+                                            <span class="badge bg-warning">Moyen</span>
+                                            @break
+                                        @default
+                                            <span class="badge bg-success">Faible</span>
+                                    @endswitch
+                                </td>
                                 <td>
                                     @if($complaint->status === 'en_attente')
                                         <span class="badge bg-warning">En attente</span>
@@ -126,85 +237,128 @@
                         @endforeach
                     </tbody>
                 </table>
+                @if($recentComplaints->isEmpty())
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Aucune réclamation trouvée</p>
+                    </div>
+                @endif
+            </div>
+            {{ $recentComplaints->links() }}
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Evolution Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Évolution des Réclamations</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="evolutionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Types Distribution Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Types de Réclamations</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="typesChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endsection
+
+@section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Debug data
-    console.log('Chart Labels:', @json($chartLabels));
-    console.log('Chart Data:', @json($chartData));
-    console.log('Type Distribution:', @json($typeDistribution));
+    // Debug logging
+    console.log('Chart data:', @json($chartData));
+    console.log('Types distribution:', @json($typeDistribution));
 
-    // Histogram Chart
-    const ctx = document.getElementById('complaintsChart');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: @json($chartLabels),
-                datasets: @json($chartData)
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
+    try {
+        // Evolution Chart
+        const evolutionCtx = document.getElementById('evolutionChart');
+        if (evolutionCtx) {
+            new Chart(evolutionCtx, {
+                type: 'line',
+                data: {
+                    labels: @json($chartData['labels']),
+                    datasets: @json($chartData['datasets'])
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
                         }
                     }
+                }
+            });
+        } else {
+            console.error('Evolution chart canvas not found');
+        }
+
+        // Types Distribution Chart
+        const typesCtx = document.getElementById('typesChart');
+        if (typesCtx) {
+            new Chart(typesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: @json($typeDistribution['labels']),
+                    datasets: [{
+                        data: @json($typeDistribution['data']),
+                        backgroundColor: [
+                            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+                        ]
+                    }]
                 },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
                     }
                 }
-            }
-        });
-    } else {
-        console.error('Cannot find complaintsChart canvas element');
+            });
+        } else {
+            console.error('Types chart canvas not found');
+        }
+    } catch (error) {
+        console.error('Error initializing charts:', error);
     }
 
-    // Donut Chart
-    const typesCtx = document.getElementById('typesChart');
-    if (typesCtx) {
-        new Chart(typesCtx, {
-            type: 'doughnut',
-            data: {
-                labels: @json($typeDistribution['labels']),
-                datasets: [{
-                    data: @json($typeDistribution['data']),
-                    backgroundColor: @json($typeDistribution['backgroundColor'])
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-    } else {
-        console.error('Cannot find typesChart canvas element');
-    }
-
-    // Auto-submit form when period changes
-    document.querySelectorAll('input[name="period"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            this.closest('form').submit();
-        });
+    // Filter form submission
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const queryString = new URLSearchParams(formData).toString();
+        window.location.href = `${window.location.pathname}?${queryString}`;
     });
 });
 </script>
-@endpush
 @endsection

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('complaints', function (Blueprint $table) {
-            $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('phone')->nullable()->after('email');
         });
     }
 
@@ -22,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('complaints', function (Blueprint $table) {
-            $table->dropForeign(['assigned_to']);
-            $table->dropColumn('assigned_to');
+            $table->dropColumn('phone');
         });
     }
 };

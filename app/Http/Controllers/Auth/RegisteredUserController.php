@@ -19,7 +19,8 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        $roles = User::getRoles();
+        return view('auth.register', compact('roles'));
     }
 
     /**
@@ -33,18 +34,24 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => ['required', 'string', 'in:' . implode(',', array_keys(User::getRoles()))],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        if ($user->role === User::ROLE_ADMIN) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return redirect()->route('user.dashboard');
     }
 }

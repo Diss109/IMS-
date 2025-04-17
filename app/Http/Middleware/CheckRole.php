@@ -4,7 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class CheckRole
 {
@@ -18,21 +19,35 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, ...$roles)
     {
-        if (!$request->user()) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
-        $userRole = $request->user()->role;
+        $user = Auth::user();
 
-        if (empty($roles) || in_array($userRole, $roles)) {
+        // If user is admin, they can access everything
+        if ($user->role === User::ROLE_ADMIN) {
             return $next($request);
         }
 
-        if ($userRole === 'admin') {
-            return redirect()->route('admin.dashboard');
+        // If no roles are required, proceed
+        if (empty($roles)) {
+            return $next($request);
         }
 
-        return redirect()->route('user.dashboard')
-            ->with('error', 'You do not have permission to access this area.');
+        // Convert roles string to array if it's a single string
+        if (is_string($roles[0]) && str_contains($roles[0], ',')) {
+            $roles = explode(',', $roles[0]);
+        }
+
+        // Check if user has any of the required roles
+        if (in_array($user->role, $roles)) {
+            return $next($request);
+        }
+
+        // If user doesn't have required role, redirect with error message
+        return redirect()
+            ->route('dashboard')
+            ->with('error', 'Vous n\'avez pas la permission d\'accéder à cette zone.');
     }
 }

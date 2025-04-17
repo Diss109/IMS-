@@ -37,23 +37,37 @@
                                     {{ $complaint->first_name }} {{ $complaint->last_name }}<br>
                                     <small class="text-muted">{{ $complaint->email }}</small>
                                 </td>
-                                <td>{{ __('complaints.types.' . $complaint->complaint_type) }}</td>
+                                <td>
+                                    @if($complaint->complaint_type === 'retard_livraison')
+                                        Retard de livraison
+                                    @elseif($complaint->complaint_type === 'retard_chargement')
+                                        Retard de chargement
+                                    @elseif($complaint->complaint_type === 'marchandise_endommagée')
+                                        Marchandise endommagée
+                                    @elseif($complaint->complaint_type === 'mauvais_comportement')
+                                        Mauvais comportement
+                                    @else
+                                        Autre
+                                    @endif
+                                </td>
                                 <td>
                                     @if($complaint->urgency_level === 'high')
-                                        <span class="badge bg-danger">{{ __('complaints.urgency.high') }}</span>
+                                        <span class="badge bg-danger">Élevé</span>
                                     @elseif($complaint->urgency_level === 'medium')
-                                        <span class="badge bg-warning">{{ __('complaints.urgency.medium') }}</span>
+                                        <span class="badge bg-warning">Moyen</span>
+                                    @elseif($complaint->urgency_level === 'critical')
+                                        <span class="badge bg-dark">Critique</span>
                                     @else
-                                        <span class="badge bg-success">{{ __('complaints.urgency.low') }}</span>
+                                        <span class="badge bg-success">Faible</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($complaint->status === 'résolu')
-                                        <span class="badge bg-success">{{ __('complaints.status.résolu') }}</span>
+                                        <span class="badge bg-success">Résolu</span>
                                     @elseif($complaint->status === 'en_attente')
-                                        <span class="badge bg-warning">{{ __('complaints.status.en_attente') }}</span>
+                                        <span class="badge bg-warning">En attente</span>
                                     @else
-                                        <span class="badge bg-danger">{{ __('complaints.status.non_résolu') }}</span>
+                                        <span class="badge bg-danger">Non résolu</span>
                                     @endif
                                 </td>
                                 <td>{{ $complaint->created_at->format('d/m/Y H:i') }}</td>

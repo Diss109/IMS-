@@ -49,7 +49,22 @@
                             <strong>Type de réclamation:</strong>
                         </div>
                         <div class="col-md-8">
-                            {{ __('complaints.types.' . $complaint->complaint_type) }}
+                            @switch($complaint->complaint_type)
+                                @case('retard_livraison')
+                                    Retard de livraison
+                                    @break
+                                @case('retard_chargement')
+                                    Retard de chargement
+                                    @break
+                                @case('marchandise_endommagée')
+                                    Marchandise endommagée
+                                    @break
+                                @case('mauvais_comportement')
+                                    Mauvais comportement
+                                    @break
+                                @default
+                                    Autre
+                            @endswitch
                         </div>
                     </div>
 
@@ -58,13 +73,19 @@
                             <strong>Niveau d'urgence:</strong>
                         </div>
                         <div class="col-md-8">
-                            @if($complaint->urgency_level === 'high')
-                                <span class="badge bg-danger">{{ __('complaints.urgency.high') }}</span>
-                            @elseif($complaint->urgency_level === 'medium')
-                                <span class="badge bg-warning">{{ __('complaints.urgency.medium') }}</span>
-                            @else
-                                <span class="badge bg-success">{{ __('complaints.urgency.low') }}</span>
-                            @endif
+                            @switch($complaint->urgency_level)
+                                @case('critique')
+                                    <span class="badge bg-dark">Critique</span>
+                                    @break
+                                @case('élevé')
+                                    <span class="badge bg-danger">Élevé</span>
+                                    @break
+                                @case('moyen')
+                                    <span class="badge bg-warning">Moyen</span>
+                                    @break
+                                @default
+                                    <span class="badge bg-success">Faible</span>
+                            @endswitch
                         </div>
                     </div>
 

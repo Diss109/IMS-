@@ -35,7 +35,7 @@ class ComplaintController extends Controller
             'email' => 'required|email|max:255',
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'complaint_type' => 'required|string|in:service_quality,delivery_delay,damaged_goods,customer_service,billing_issue,other',
+            'complaint_type' => 'required|string|in:retard_livraison,retard_chargement,marchandise_endommagée,mauvais_comportement,autre',
             'urgency_level' => 'required|string|in:low,medium,high,critical',
             'description' => 'required|string',
         ], [
