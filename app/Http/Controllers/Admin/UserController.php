@@ -25,7 +25,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', 'string', Rule::in(['admin', 'commercial_maritime', 'commercial_terrestre', 'commercial_aerien'])],
+            'role' => ['required', 'string', Rule::in(array_keys(User::getRoles()))],
         ]);
 
         $user->update([
@@ -35,13 +35,13 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', 'Utilisateur mis à jour avec succès.');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
         return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully.');
+            ->with('success', 'Utilisateur supprimé avec succès.');
     }
 }

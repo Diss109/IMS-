@@ -10,16 +10,52 @@ use Illuminate\Support\Facades\Auth;
 
 class ComplaintController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Complaint::latest();
+        $query = Complaint::query();
 
+        // Filter by assigned user if not admin
         if (!$user->isAdmin()) {
             $query->where('assigned_to', $user->id);
         }
 
-        $complaints = $query->paginate(15);
+        // Apply filters from request
+        if ($request->filled('type')) {
+            $query->where('complaint_type', $request->input('type'));
+        }
+        if ($request->filled('urgency')) {
+            $query->where('urgency_level', $request->input('urgency'));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+        // Period filter (date range)
+        if ($request->filled('period')) {
+            $period = $request->input('period');
+            $now = now();
+            switch ($period) {
+                case 'week':
+                    $query->where('created_at', '>=', $now->copy()->startOfWeek());
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', $now->copy()->startOfMonth());
+                    break;
+                case 'year':
+                    $query->where('created_at', '>=', $now->copy()->startOfYear());
+                    break;
+                default:
+                    // 'total' or any other value: no filter
+                    break;
+            }
+        }
+
+        // Add date filter if present
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->input('date'));
+        }
+
+        $complaints = $query->latest()->paginate(15)->appends($request->query());
         $users = User::where('role', '!=', User::ROLE_ADMIN)->get();
 
         return view('admin.complaints.index', compact('complaints', 'users'));

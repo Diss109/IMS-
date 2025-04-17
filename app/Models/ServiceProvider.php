@@ -23,7 +23,8 @@ class ServiceProvider extends Model
         'email',
         'phone',
         'address',
-        'type'
+        'service_type',
+        'status',
     ];
 
     public static function getTypes()

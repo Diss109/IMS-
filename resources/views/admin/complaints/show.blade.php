@@ -73,19 +73,20 @@
                             <strong>Niveau d'urgence:</strong>
                         </div>
                         <div class="col-md-8">
-                            @switch($complaint->urgency_level)
-                                @case('critique')
-                                    <span class="badge bg-dark">Critique</span>
-                                    @break
-                                @case('élevé')
-                                    <span class="badge bg-danger">Élevé</span>
-                                    @break
-                                @case('moyen')
-                                    <span class="badge bg-warning">Moyen</span>
-                                    @break
-                                @default
-                                    <span class="badge bg-success">Faible</span>
-                            @endswitch
+                            @php
+    $levels = [
+        'critique' => ['label' => 'Critique', 'class' => 'bg-dark'],
+        'critical' => ['label' => 'Critique', 'class' => 'bg-dark'],
+        'élevé' => ['label' => 'Élevé', 'class' => 'bg-danger'],
+        'high' => ['label' => 'Élevé', 'class' => 'bg-danger'],
+        'moyen' => ['label' => 'Moyen', 'class' => 'bg-warning'],
+        'medium' => ['label' => 'Moyen', 'class' => 'bg-warning'],
+        'faible' => ['label' => 'Faible', 'class' => 'bg-success'],
+        'low' => ['label' => 'Faible', 'class' => 'bg-success'],
+    ];
+    $urgency = $levels[$complaint->urgency_level] ?? ['label' => 'Faible', 'class' => 'bg-success'];
+@endphp
+<span class="badge {{ $urgency['class'] }}">{{ $urgency['label'] }}</span>
                         </div>
                     </div>
 
@@ -113,7 +114,7 @@
                             <strong>Assigné à:</strong>
                         </div>
                         <div class="col-md-8">
-                            {{ $complaint->assignedUser->name }} ({{ __('roles.' . $complaint->assignedUser->role) }})
+                            {{ $complaint->assignedUser->name }} ({{ \App\Models\User::getRoles()[$complaint->assignedUser->role] ?? $complaint->assignedUser->role }})
                         </div>
                     </div>
                     @endif
@@ -140,7 +141,7 @@
                                 @foreach($users as $user)
                                     <option value="{{ $user->id }}"
                                             {{ $complaint->assigned_to == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} ({{ __('roles.' . $user->role) }})
+                                        {{ $user->name }} ({{ \App\Models\User::getRoles()[$user->role] ?? $user->role }})
                                     </option>
                                 @endforeach
                             </select>

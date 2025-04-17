@@ -31,20 +31,22 @@
                                         <td>{{ $user->name }}</td>
                                         <td>{{ $user->email }}</td>
                                         <td>
-                                            @switch($user->role)
-                                                @case('admin')
-                                                    <span class="badge bg-danger">Administrateur</span>
-                                                    @break
-                                                @case('commercial_maritime')
-                                                    <span class="badge bg-primary">Commercial Maritime</span>
-                                                    @break
-                                                @case('commercial_terrestre')
-                                                    <span class="badge bg-success">Commercial Terrestre</span>
-                                                    @break
-                                                @case('commercial_aerien')
-                                                    <span class="badge bg-info">Commercial Aérien</span>
-                                                    @break
-                                            @endswitch
+                                            @php
+    $roleLabels = \App\Models\User::getRoles();
+    $roleBadges = [
+        'admin' => 'bg-danger',
+        'commercial_routier' => 'bg-success',
+        'exploitation_routier' => 'bg-secondary',
+        'commercial_maritime' => 'bg-primary',
+        'exploitation_maritime' => 'bg-info',
+        'commercial_aerien' => 'bg-info',
+        'exploitation_aerien' => 'bg-secondary',
+    ];
+    $badgeClass = $roleBadges[$user->role] ?? 'bg-dark';
+@endphp
+<span class="badge {{ $badgeClass }}">
+    {{ $roleLabels[$user->role] ?? ucfirst(str_replace('_', ' ', $user->role)) }}
+</span>
                                         </td>
                                         <td>
                                             <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-primary">

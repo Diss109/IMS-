@@ -36,12 +36,11 @@
                         <div class="form-group mb-3">
                             <label for="role">Rôle</label>
                             <select class="form-control @error('role') is-invalid @enderror" id="role" name="role" required>
-                                <option value="">Sélectionner un rôle</option>
-                                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Administrateur</option>
-                                <option value="commercial_maritime" {{ old('role', $user->role) == 'commercial_maritime' ? 'selected' : '' }}>Commercial Maritime</option>
-                                <option value="commercial_terrestre" {{ old('role', $user->role) == 'commercial_terrestre' ? 'selected' : '' }}>Commercial Terrestre</option>
-                                <option value="commercial_aerien" {{ old('role', $user->role) == 'commercial_aerien' ? 'selected' : '' }}>Commercial Aérien</option>
-                            </select>
+    <option value="">Sélectionner un rôle</option>
+    @foreach(\App\Models\User::getRoles() as $value => $label)
+        <option value="{{ $value }}" {{ old('role', $user->role) == $value ? 'selected' : '' }}>{{ $label }}</option>
+    @endforeach
+</select>
                             @error('role')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

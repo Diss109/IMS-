@@ -5,6 +5,8 @@
         <h1>Gestion des réclamations</h1>
     </div>
 
+    @include('admin.complaints.filters')
+
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -12,7 +14,10 @@
         </div>
     @endif
 
-    <div class="card">
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Réclamations récentes</h5>
+        </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -107,4 +112,5 @@
             </div>
         </div>
     </div>
+</div>
 @endsection
