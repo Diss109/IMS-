@@ -91,15 +91,18 @@ class ComplaintController extends Controller
 
         $oldStatus = $complaint->status;
         $complaint->update($validated);
-        // Create a notification if status changed
+        // Create a notification for ALL admins if status changed
         if ($oldStatus !== $validated['status']) {
-            \App\Models\Notification::create([
-                'user_id' => 1, // Assuming admin has user_id = 1; adjust as needed
-                'type' => 'complaint_status',
-                'message' => 'La réclamation #' . $complaint->id . ' a changé de statut: ' . $validated['status'],
-                'is_read' => false,
-                'related_id' => $complaint->id
-            ]);
+            $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'type' => 'complaint_status',
+                    'message' => 'La réclamation #' . $complaint->id . ' a changé de statut: ' . $validated['status'],
+                    'is_read' => false,
+                    'related_id' => $complaint->id
+                ]);
+            }
         }
 
         return redirect()

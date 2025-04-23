@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration - IMS</title>
@@ -33,7 +34,7 @@
         }
         :root {
     --sidebar-width: 250px;
-    --sidebar-collapsed-width: 80px;
+    --sidebar-collapsed-width: 56px;
 }
 
         body {
@@ -66,7 +67,13 @@
     color: #ecf0f1;
     text-decoration: none;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     /* overflow: hidden; */
+}
+.sidebar:hover .nav-link {
+    justify-content: flex-start;
 }
 
         .sidebar .nav-link:hover {
@@ -125,22 +132,24 @@
             overflow: hidden;
         }
         .sidebar-logo, .sidebar-menu-logo {
-    width: 24px !important;
-    height: 24px !important;
+    width: 32px !important;
+    height: 32px !important;
     margin-right: 10px;
     object-fit: contain;
     display: inline-block !important;
     vertical-align: middle;
-    transition: all 0.3s;
+    transition: margin 0.3s, opacity 0.3s;
     border: none;
 }
 /* When sidebar is collapsed, center icon and remove margin */
 .sidebar:not(:hover) .sidebar-logo,
 .sidebar:not(:hover) .sidebar-menu-logo {
     margin-right: 0 !important;
-    display: block !important;
     margin-left: auto;
     margin-right: auto;
+    /* Center icon, but do not change display or size */
+    opacity: 1 !important;
+    display: inline-block !important;
 }
 .sidebar:not(:hover) .sidebar-link-text {
     opacity: 0;
@@ -164,15 +173,20 @@
             width: auto;
         }
         .sidebar-link-text {
-            display: inline;
-            transition: opacity 0.3s, width 0.3s;
-        }
-        .sidebar:not(:hover) .sidebar-link-text {
-            opacity: 0;
-            width: 0;
-            overflow: hidden;
-            display: inline-block;
-        }
+    display: inline;
+    transition: opacity 0.3s, width 0.3s;
+}
+.sidebar:not(:hover) .sidebar-link-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    display: none;
+}
+.sidebar:hover .sidebar-link-text {
+    opacity: 1;
+    width: auto;
+    display: inline;
+}
     </style>
 </head>
 <body>
@@ -219,7 +233,7 @@
 
             <!-- Main Content -->
             <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-3" style="gap:16px;">
+    <div class="d-flex justify-content-between align-items-center" style="gap:16px; margin-bottom: 8px; padding-bottom: 0;">
         <div>
             <h1 class="dashboard-title mb-0" style="font-size:2rem;padding-left: 15px;">
                 @yield('page_title', 'Tableau de bord')
@@ -229,8 +243,7 @@
             <span class="dashboard-username dashboard-username-small">{{ Auth::user()->name }}</span>
             <div class="notification-bell-wrapper" style="position:relative;display:inline-block;">
                 <i class="fas fa-bell" id="notification-bell" tabindex="0" style="font-size:26px;color:#555;cursor:pointer;pointer-events:auto;"></i>
-                <span id="notification-badge" style="position:absolute;top:-7px;right:-7px;background:#dc3545;color:#fff;border-radius:50%;padding:2px 7px;font-size:12px;min-width:18px;text-align:center;{{ (($unreadNotificationsCount ?? 0) > 0) ? '' : 'display:none;' }}">
-                    {{ $unreadNotificationsCount ?? 0 }}
+                <span id="notification-badge" style="position:absolute;top:-7px;right:-7px;background:#dc3545;color:#fff;border-radius:50%;padding:2px 7px;font-size:12px;min-width:18px;text-align:center;display:none;">
                 </span>
                 <div id="notification-dropdown" class="card shadow" style="display:none;position:absolute;right:0;top:36px;min-width:340px;z-index:9999;">
                     <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center">
@@ -251,89 +264,158 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-function updateNotificationBadge(count) {
-    var badge = document.getElementById('notification-badge');
-    if (!badge) return;
-    if (count > 0) {
-        badge.style.display = '';
-        badge.textContent = count;
-    } else {
-        badge.style.display = 'none';
-    }
-}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function updateNotificationBadge(count) {
+                var badge = document.getElementById('notification-badge');
+                if (!badge) return;
+                if (count > 0) {
+                    badge.style.display = '';
+                    badge.textContent = count;
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
 
-function fetchUnreadNotifications() {
-    fetch('/admin/notifications/unread-count')
-        .then(response => response.json())
-        .then(data => {
-            updateNotificationBadge(data.count);
-        });
-}
-
-// Poll every 10 seconds
-setInterval(fetchUnreadNotifications, 10000);
-// Also fetch immediately on page load
-fetchUnreadNotifications();
-</script>
-<script>
-// Dropdown handling for notifications
-const bell = document.getElementById('notification-bell');
-const dropdown = document.getElementById('notification-dropdown');
-const notifList = document.getElementById('notification-list');
-
-if (bell && dropdown && notifList) {
-    bell.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (dropdown.style.display === 'block') {
-            dropdown.style.display = 'none';
-        } else {
-            dropdown.style.display = 'block';
-            notifList.innerHTML = '<li class="list-group-item text-center text-muted">Chargement...</li>';
-            fetch('/admin/notifications/latest')
-                .then(resp => resp.json())
-                .then(data => {
-                    if (!data.notifications || data.notifications.length === 0) {
-                        notifList.innerHTML = '<li class="list-group-item text-center text-muted">Aucune notification récente.</li>';
-                        return;
-                    }
-                    notifList.innerHTML = '';
-                    data.notifications.forEach(function(n) {
-                        let li = document.createElement('li');
-                        li.className = 'list-group-item d-flex justify-content-between align-items-center' + (n.is_read ? '' : ' fw-bold bg-light');
-                        li.style.cursor = 'pointer';
-                        li.innerHTML = `<span>${n.message}</span><small class="text-muted ms-2">${(new Date(n.created_at)).toLocaleString('fr-FR')}</small>`;
-                        li.onclick = function(ev) {
-                            ev.stopPropagation();
-                            fetch('/admin/notifications/mark-read', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                },
-                                body: JSON.stringify({id: n.id})
-                            }).then(() => {
-                                li.classList.remove('fw-bold','bg-light');
-                                // Optionally update badge
-                                fetchUnreadNotifications();
-                                if (n.related_id) {
-                                    window.location.href = '/admin/complaints/' + n.related_id;
-                                }
-                            });
-                        };
-                        notifList.appendChild(li);
+            function fetchUnreadNotifications() {
+                fetch('/admin/notifications/unread-count')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateNotificationBadge(data.count);
                     });
-                });
-        }
-    });
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        dropdown.style.display = 'none';
-    });
-    dropdown.addEventListener('click', function(e) {
+            }
+
+            // Poll every 10 seconds
+            setInterval(fetchUnreadNotifications, 10000);
+            // Also fetch immediately on page load
+            fetchUnreadNotifications();
+
+            const bell = document.getElementById('notification-bell');
+            const dropdown = document.getElementById('notification-dropdown');
+            const notifList = document.getElementById('notification-list');
+
+            if (bell && dropdown && notifList) {
+                bell.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (dropdown.style.display === 'block') {
+                        dropdown.style.display = 'none';
+                    } else {
+                        // Mark all as read when opening dropdown
+                        fetch('/admin/notifications/mark-all-read', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({})
+                        }).then(() => {
+                            fetchUnreadNotifications();
+                        });
+                        dropdown.style.display = 'block';
+                        notifList.innerHTML = '<li class="list-group-item text-center text-muted">Chargement...</li>';
+                        fetch('/admin/notifications/latest')
+                            .then(resp => resp.json())
+                            .then(data => {
+                                if (!data.notifications || data.notifications.length === 0) {
+                                    notifList.innerHTML = '<li class="list-group-item text-center text-muted">Aucune notification récente.</li>';
+                                    return;
+                                }
+                                notifList.innerHTML = '';
+                                data.notifications.forEach(function(n) {
+    let li = document.createElement('li');
+    // Color: unread = yellow bg, bold; read = white bg, muted
+    if (!n.is_read) {
+        li.className = 'list-group-item d-flex justify-content-between align-items-center fw-bold bg-warning-subtle';
+    } else {
+        li.className = 'list-group-item d-flex justify-content-between align-items-center bg-white text-muted';
+    }
+    li.style.cursor = 'pointer';
+    // Notification content
+    li.innerHTML = `<span>${n.message}</span><small class="text-muted ms-2">${(new Date(n.created_at)).toLocaleString('fr-FR')}</small>`;
+    // X button to delete
+    let delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm btn-link text-danger ms-2 px-1 py-0';
+    delBtn.innerHTML = '<i class="fas fa-times"></i>';
+    delBtn.title = 'Supprimer';
+    delBtn.onclick = function(e) {
         e.stopPropagation();
-    });
+        fetch('/admin/notifications/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({id: n.id})
+        }).then(resp => resp.json()).then(data => {
+            if (data.success) {
+                li.remove();
+                fetchUnreadNotifications();
+            }
+        });
+    };
+    li.appendChild(delBtn);
+    // Mark as read and redirect on click (except X)
+    li.onclick = function(ev) {
+        if (ev.target === delBtn || delBtn.contains(ev.target)) return;
+        fetch('/admin/notifications/mark-read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({id: n.id})
+        }).then(() => {
+            li.classList.remove('fw-bold','bg-warning-subtle');
+            li.classList.add('bg-white','text-muted');
+            fetchUnreadNotifications();
+            if (n.related_id) {
+                window.location.href = '/admin/complaints/' + n.related_id;
+            }
+        });
+    };
+    notifList.appendChild(li);
+});
+// Add Clear All button if there are notifications
+if (data.notifications.length > 0) {
+    let clearBtn = document.createElement('button');
+    clearBtn.className = 'btn btn-sm btn-outline-danger w-100 mt-2';
+    clearBtn.textContent = 'Tout effacer';
+    clearBtn.onclick = function(e) {
+        e.stopPropagation();
+        if (!confirm('Effacer toutes les notifications ?')) return;
+        fetch('/admin/notifications/delete-all', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({})
+        }).then(resp => resp.json()).then(data => {
+            if (data.success) {
+                notifList.innerHTML = '<li class="list-group-item text-center text-muted">Aucune notification récente.</li>';
+                fetchUnreadNotifications();
+            }
+        });
+    };
+    let li = document.createElement('li');
+    li.className = 'list-group-item p-1 border-0';
+    li.appendChild(clearBtn);
+    notifList.appendChild(li);
 }
-</script>
+
+                            });
+                    }
+                });
+
+                // Hide dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    dropdown.style.display = 'none';
+                });
+                dropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+    </script>
 </body>
 </html>

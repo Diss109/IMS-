@@ -33,8 +33,10 @@ class ComplaintController extends Controller
 
             // Use a guaranteed working direct insert like in our test endpoint
             $companyName = $request->input('company_name');
-            if (!$companyName || strtolower(trim($companyName)) === 'non') {
+            if (!$companyName) {
                 $companyName = 'Particulier';
+            } elseif (strtolower(trim($companyName)) === 'non') {
+                $companyName = 'sans entreprise';
             }
             $id = \DB::table('complaints')->insertGetId([
                 'company_name' => $companyName,

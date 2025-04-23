@@ -14,11 +14,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Notification;
 
-// Notification unread count for admin notification bell
-Route::get('/admin/notifications/unread-count', function() {
-    $count = Notification::where('user_id', 1)->where('is_read', false)->count();
-    return response()->json(['count' => $count]);
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +88,50 @@ Route::middleware(['web'])->group(function () {
         Route::resource('users', UserController::class);
         Route::get('evaluator-permissions', [\App\Http\Controllers\Admin\EvaluatorPermissionController::class, 'index'])->name('evaluator_permissions.index');
         Route::post('evaluator-permissions', [\App\Http\Controllers\Admin\EvaluatorPermissionController::class, 'store'])->name('evaluator_permissions.store');
+
+        // Notifications
+        Route::post('/notifications/delete', [App\Http\Controllers\NotificationController::class, 'destroy'])->middleware(['auth', 'admin']);
+        Route::post('/notifications/delete-all', [App\Http\Controllers\NotificationController::class, 'destroyAll'])->middleware(['auth', 'admin']);
+
+        // Notification endpoints
+        Route::post('/notifications/mark-all-read', function(Illuminate\Http\Request $request) {
+            $user = Auth::user();
+            if (!$user || !$user->isAdmin()) {
+                return response()->json(['success' => false], 403);
+            }
+            Notification::where('user_id', $user->id)->where('is_read', false)->update(['is_read' => true]);
+            return response()->json(['success' => true]);
+        });
+        Route::get('/notifications/latest', function(Illuminate\Http\Request $request) {
+            $user = Auth::user();
+            if (!$user || !$user->isAdmin()) {
+                return response()->json(['notifications' => []]);
+            }
+            $notifications = Notification::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+            return response()->json(['notifications' => $notifications]);
+        });
+        Route::post('/notifications/mark-read', function(Illuminate\Http\Request $request) {
+            $user = Auth::user();
+            $id = $request->input('id');
+            if (!$user || !$user->isAdmin() || !$id) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized or invalid ID'], 403);
+            }
+            Notification::where('user_id', $user->id)
+                ->where('id', $id)
+                ->update(['is_read' => true]);
+            return response()->json(['success' => true]);
+        });
+        Route::get('/notifications/unread-count', function(Illuminate\Http\Request $request) {
+            $user = Auth::user();
+            if (!$user || !$user->isAdmin()) {
+                return response()->json(['count' => 0]);
+            }
+            $count = Notification::where('user_id', $user->id)->where('is_read', false)->count();
+            return response()->json(['count' => $count]);
+        });
     });
 });
 
