@@ -90,8 +90,8 @@ Route::middleware(['web'])->group(function () {
         Route::post('evaluator-permissions', [\App\Http\Controllers\Admin\EvaluatorPermissionController::class, 'store'])->name('evaluator_permissions.store');
 
         // Notifications
-        Route::post('/notifications/delete', [App\Http\Controllers\NotificationController::class, 'destroy'])->middleware(['auth', 'admin']);
-        Route::post('/notifications/delete-all', [App\Http\Controllers\NotificationController::class, 'destroyAll'])->middleware(['auth', 'admin']);
+        Route::post('/notifications/delete', [App\Http\Controllers\NotificationController::class, 'destroy'])->middleware(['auth']);
+        Route::post('/notifications/delete-all', [App\Http\Controllers\NotificationController::class, 'destroyAll'])->middleware(['auth']);
 
         // Notification endpoints
         Route::post('/notifications/mark-all-read', function(Illuminate\Http\Request $request) {

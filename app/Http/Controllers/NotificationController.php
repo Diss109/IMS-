@@ -11,10 +11,12 @@ class NotificationController extends Controller
     // Delete a single notification (by id)
     public function destroy(Request $request)
     {
-        $request->validate([
-            'id' => 'required|integer|exists:notifications,id',
-        ]);
-        $notification = Notification::find($request->id);
+        // Accept JSON
+        $id = $request->input('id');
+        if (!$id || !is_numeric($id)) {
+            return response()->json(['success' => false, 'error' => 'ID manquant ou invalide'], 400);
+        }
+        $notification = Notification::find($id);
         if ($notification && $notification->user_id === Auth::id()) {
             $notification->delete();
             return response()->json(['success' => true]);

@@ -53,14 +53,21 @@ class ComplaintController extends Controller
             
             \Log::info('SUCCESS - complaint created with ID: ' . $id);
 
-            // Create a notification for admin (user_id = 1)
-            Notification::create([
-                'user_id' => 1, // Adjust if your admin user_id is different
-                'type' => 'new_complaint',
-                'message' => 'Nouvelle réclamation soumise: #' . $id . ' - ' . $request->input('sujet', 'autre'),
-                'is_read' => false,
-                'related_id' => $id
-            ]);
+            // Create a notification for ALL admins
+            try {
+                $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
+                foreach ($admins as $admin) {
+                    Notification::create([
+                        'user_id' => $admin->id,
+                        'type' => 'new_complaint',
+                        'message' => 'Nouvelle réclamation soumise: #' . $id . ' - ' . $request->input('sujet', 'autre'),
+                        'is_read' => false,
+                        'related_id' => $id
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Notification creation failed for chatbot complaint: ' . $e->getMessage());
+            }
             
             // Handle file separately (after successful complaint creation)
             if ($request->hasFile('piece_jointe')) {
@@ -132,14 +139,17 @@ class ComplaintController extends Controller
 
         $complaint = Complaint::create($validated);
 
-        // Create a notification for admin (user_id = 1)
-        Notification::create([
-            'user_id' => 1, // Adjust if your admin user_id is different
-            'type' => 'new_complaint',
-            'message' => 'Nouvelle réclamation soumise: #' . $complaint->id . ' - ' . $complaint->complaint_type,
-            'is_read' => false,
-            'related_id' => $complaint->id
-        ]);
+        // Create a notification for ALL admins
+        $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
+        foreach ($admins as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'new_complaint',
+                'message' => 'Nouvelle réclamation soumise: #' . $complaint->id . ' - ' . $complaint->complaint_type,
+                'is_read' => false,
+                'related_id' => $complaint->id
+            ]);
+        }
 
         return redirect()
             ->route('complaints.show', $complaint)
