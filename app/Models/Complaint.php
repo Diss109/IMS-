@@ -31,7 +31,8 @@ class Complaint extends Model
         'assigned_to',
         'service_provider_id',
         'transporter_id',
-        'admin_notes'
+        'admin_notes',
+        'attachment'
     ];
 
     protected $dates = [

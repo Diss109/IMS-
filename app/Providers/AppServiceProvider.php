@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \View::composer('*', function ($view) {
+            $user = auth()->user();
+            if ($user && $user->role === 'admin') {
+                $unreadNotificationsCount = \App\Models\Notification::where('is_read', false)->count();
+                $view->with('unreadNotificationsCount', $unreadNotificationsCount);
+            }
+        });
     }
 }

@@ -4,11 +4,90 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Complaint;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ComplaintReceived;
 
 class ComplaintController extends Controller
 {
+    /**
+     * Show the chatbot complaint form (French).
+     */
+    public function chatbotForm()
+    {
+        return view('reclamation_chatbot');
+    }
+
+    /**
+     * Handle chatbot complaint submission (French).
+     */
+    public function chatbotStore(Request $request)
+    {
+        try {
+            // First, let's log what we're receiving to see if the data is correct
+            \Log::info('===== CHATBOT SUBMISSION =====');
+            \Log::info('All form data: ' . json_encode($request->all()));
+
+            // Check urgency format
+            \Log::info('Urgency value received: "' . $request->input('urgence') . '"');
+
+            // Use a guaranteed working direct insert like in our test endpoint
+            $companyName = $request->input('company_name');
+            if (!$companyName || strtolower(trim($companyName)) === 'non') {
+                $companyName = 'Particulier';
+            }
+            $id = \DB::table('complaints')->insertGetId([
+                'company_name' => $companyName,
+                'first_name' => $request->input('nom', 'Client'),
+                'last_name' => 'Chatbot Client',
+                'email' => $request->input('email', 'chatbot@example.com'),
+                'complaint_type' => $request->input('sujet', 'autre'),
+                'description' => $request->input('description', 'No description provided'),
+                'urgency_level' => $request->input('urgence', 'medium'),
+                'status' => 'en_attente',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            \Log::info('SUCCESS - complaint created with ID: ' . $id);
+
+            // Create a notification for admin (user_id = 1)
+            Notification::create([
+                'user_id' => 1, // Adjust if your admin user_id is different
+                'type' => 'new_complaint',
+                'message' => 'Nouvelle réclamation soumise: #' . $id . ' - ' . $request->input('sujet', 'autre'),
+                'is_read' => false,
+                'related_id' => $id
+            ]);
+            
+            // Handle file separately (after successful complaint creation)
+            if ($request->hasFile('piece_jointe')) {
+                try {
+                    $path = $request->file('piece_jointe')->store('reclamations', 'public');
+                    \DB::table('complaints')->where('id', $id)->update(['attachment' => $path]);
+                    \Log::info('File uploaded and attached to complaint: ' . $path);
+                } catch (\Exception $fileEx) {
+                    \Log::warning('File upload failed but complaint was created: ' . $fileEx->getMessage());
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Votre réclamation a été envoyée avec succès.',
+                'id' => $id
+            ]);
+        } 
+        catch (\Exception $e) {
+            \Log::error('CHATBOT ERROR: ' . $e->getMessage());
+            \Log::error('In file: ' . $e->getFile() . ' line ' . $e->getLine());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors du traitement de votre réclamation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -50,6 +129,15 @@ class ComplaintController extends Controller
         ]);
 
         $complaint = Complaint::create($validated);
+
+        // Create a notification for admin (user_id = 1)
+        Notification::create([
+            'user_id' => 1, // Adjust if your admin user_id is different
+            'type' => 'new_complaint',
+            'message' => 'Nouvelle réclamation soumise: #' . $complaint->id . ' - ' . $complaint->complaint_type,
+            'is_read' => false,
+            'related_id' => $complaint->id
+        ]);
 
         return redirect()
             ->route('complaints.show', $complaint)

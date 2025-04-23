@@ -89,7 +89,18 @@ class ComplaintController extends Controller
             $complaint->assigned_to = $validated['assigned_to'];
         }
 
+        $oldStatus = $complaint->status;
         $complaint->update($validated);
+        // Create a notification if status changed
+        if ($oldStatus !== $validated['status']) {
+            \App\Models\Notification::create([
+                'user_id' => 1, // Assuming admin has user_id = 1; adjust as needed
+                'type' => 'complaint_status',
+                'message' => 'La réclamation #' . $complaint->id . ' a changé de statut: ' . $validated['status'],
+                'is_read' => false,
+                'related_id' => $complaint->id
+            ]);
+        }
 
         return redirect()
             ->route('admin.complaints.show', $complaint)

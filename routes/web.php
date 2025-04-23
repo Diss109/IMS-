@@ -12,6 +12,13 @@ use App\Http\Controllers\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Notification;
+
+// Notification unread count for admin notification bell
+Route::get('/admin/notifications/unread-count', function() {
+    $count = Notification::where('user_id', 1)->where('is_read', false)->count();
+    return response()->json(['count' => $count]);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +33,32 @@ Route::get('/', function () {
 // Public complaint routes
 Route::get('/complaints/create', [ComplaintController::class, 'createPublic'])->name('complaints.create.public');
 Route::post('/complaints', [ComplaintController::class, 'storePublic'])->name('complaints.store.public');
+
+// Chatbot réclamation (public, no login)
+Route::get('/reclamation-chatbot', [ComplaintController::class, 'chatbotForm'])->name('reclamation.chatbot');
+Route::post('/reclamation-chatbot', [ComplaintController::class, 'chatbotStore'])->name('reclamation.chatbot.store');
+
+// Test route for debugging
+Route::get('/test-complaint-insert', function() {
+    try {
+        $id = DB::table('complaints')->insertGetId([
+            'company_name' => 'Test Company',
+            'first_name' => 'Test User',
+            'last_name' => 'Test Lastname', // Added required last_name field
+            'email' => 'test@example.com',
+            'complaint_type' => 'retard_livraison',
+            'description' => 'Test complaint for debugging',
+            'urgency_level' => 'high',
+            'status' => 'en_attente',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        return 'Test complaint created with ID: ' . $id;
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});
 
 // Authentication Routes
 Route::middleware(['web'])->group(function () {

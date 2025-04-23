@@ -1,13 +1,23 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Détails de la réclamation #{{ $complaint->id }}</h1>
-        <div>
-            <a href="{{ route('admin.complaints.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Retour
-            </a>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="dashboard-title">Détails de la Réclamation</h1>
+        <div class="d-flex align-items-center gap-2 dashboard-user-logo">
+            <span class="dashboard-username dashboard-username-small">{{ Auth::user()->name }}</span>
+            <span style="position:relative;display:inline-block;margin:0 10px;">
+                <i class="fas fa-bell" id="notification-bell" style="font-size:26px;color:#555;"></i>
+                <span id="notification-badge" style="position:absolute;top:-7px;right:-7px;background:#dc3545;color:#fff;border-radius:50%;padding:2px 7px;font-size:12px;min-width:18px;text-align:center;{{ (($unreadNotificationsCount ?? 0) > 0) ? '' : 'display:none;' }}">
+                    {{ $unreadNotificationsCount ?? 0 }}
+                </span>
+            </span>
+            <img src="{{ asset('images/logo.jpg') }}" alt="Tuniship Logo" height="64" style="width:64px;object-fit:contain;">
         </div>
+    </div>
+    <div class="mb-4 text-end">
+        <a href="{{ route('admin.complaints.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
     </div>
 
     @if(session('success'))
@@ -89,6 +99,42 @@
 <span class="badge {{ $urgency['class'] }}">{{ $urgency['label'] }}</span>
                         </div>
                     </div>
+
+                    <div class="row mb-3">
+    <div class="col-md-4">
+        <strong>Image jointe :</strong>
+    </div>
+    <div class="col-md-8">
+        @php
+            $isImage = false;
+            if ($complaint->attachment && preg_match('/\.(jpg|jpeg|png|gif|bmp|webp)$/i', $complaint->attachment)) {
+                $isImage = true;
+            }
+        @endphp
+        @if($complaint->attachment && $isImage)
+            <a href="{{ asset('storage/' . $complaint->attachment) }}" target="_blank">
+                <img src="{{ asset('storage/' . $complaint->attachment) }}" alt="Image jointe" style="max-width: 180px; max-height: 180px; border-radius: 8px; border:1px solid #ddd;">
+            </a>
+        @elseif(!$complaint->attachment)
+            <span class="text-muted">Aucune image jointe.</span>
+        @else
+            <span class="text-muted">Le fichier joint n'est pas une image.</span>
+        @endif
+    </div>
+</div>
+
+@if($complaint->attachment && !$isImage)
+<div class="row mb-3">
+    <div class="col-md-4">
+        <strong>Pièce jointe :</strong>
+    </div>
+    <div class="col-md-8">
+        <a href="{{ asset('storage/' . $complaint->attachment) }}" target="_blank" class="btn btn-outline-primary">
+            Télécharger la pièce jointe
+        </a>
+    </div>
+</div>
+@endif
 
                     <div class="row mb-3">
                         <div class="col-md-4">

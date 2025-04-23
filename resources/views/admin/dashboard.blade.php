@@ -3,8 +3,17 @@
 @section('content')
     <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Tableau de bord</h1>
-        <img src="{{ asset('images/logo.jpg') }}" alt="Tuniship Logo" height="80" class="d-none d-md-block">
+        <h1 class="dashboard-title">Tableau de bord</h1>
+        <div class="d-flex align-items-center gap-2 dashboard-user-logo">
+            <span class="dashboard-username dashboard-username-small">{{ Auth::user()->name }}</span>
+            <span style="position:relative;display:inline-block;margin:0 10px;">
+                <i class="fas fa-bell" id="notification-bell" style="font-size:26px;color:#555;"></i>
+                <span id="notification-badge" style="position:absolute;top:-7px;right:-7px;background:#dc3545;color:#fff;border-radius:50%;padding:2px 7px;font-size:12px;min-width:18px;text-align:center;{{ (($unreadNotificationsCount ?? 0) > 0) ? '' : 'display:none;' }}">
+    {{ $unreadNotificationsCount ?? 0 }}
+</span>
+            </span>
+            <img src="{{ asset('images/logo.jpg') }}" alt="Tuniship Logo" height="80" style="width:80px;object-fit:contain;">
+        </div>
     </div>
 
     <div class="container-fluid">
