@@ -1,8 +1,9 @@
 @extends('layouts.admin')
 
+@section('page_title', 'Ajouter un Prestataire')
 @section('content')
 <div class="container mt-4">
-    <h1 class="mb-4">Ajouter un Prestataire</h1>
+
     <form action="{{ route('admin.service-providers.store') }}" method="POST" class="card shadow p-4 bg-light">
         @csrf
         <div class="row mb-3">

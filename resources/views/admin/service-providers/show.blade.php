@@ -1,10 +1,11 @@
 @extends('layouts.admin')
 
+@section('page_title', 'Détails du Prestataire')
 @section('content')
 <div class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">Détails du Prestataire</h2>
+
         </div>
         <div class="card-body">
             <div class="row mb-3">

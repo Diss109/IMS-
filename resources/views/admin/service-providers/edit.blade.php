@@ -1,8 +1,9 @@
 @extends('layouts.admin')
 
+@section('page_title', 'Modifier le Prestataire')
 @section('content')
 <div class="container mt-4">
-    <h1 class="mb-4">Modifier le Prestataire</h1>
+
     <form action="{{ route('admin.service-providers.update', $serviceProvider) }}" method="POST" class="card shadow p-4 bg-light">
         @csrf
         @method('PUT')

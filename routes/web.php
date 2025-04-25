@@ -84,7 +84,8 @@ Route::middleware(['web'])->group(function () {
         Route::resource('transporters', TransporterController::class);
         Route::resource('service-providers', ServiceProviderController::class);
         Route::resource('kpis', KpiController::class);
-        Route::resource('evaluations', EvaluationController::class);
+        Route::get('service-providers/{id}/evaluations/create', [EvaluationController::class, 'create'])->name('evaluations.create');
+        Route::resource('evaluations', EvaluationController::class)->except(['create']);
         Route::resource('users', UserController::class);
         Route::get('evaluator-permissions', [\App\Http\Controllers\Admin\EvaluatorPermissionController::class, 'index'])->name('evaluator_permissions.index');
         Route::post('evaluator-permissions', [\App\Http\Controllers\Admin\EvaluatorPermissionController::class, 'store'])->name('evaluator_permissions.store');
