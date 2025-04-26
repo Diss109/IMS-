@@ -33,7 +33,8 @@
                     <td>{{ $provider->phone }}</td>
                     <td>{{ $provider->address }}</td>
                     <td>
-                        <a href="{{ route('admin.evaluations.create', $provider->id) }}" class="btn btn-primary btn-sm">Évaluer</a>
+                        <a href="{{ route('admin.evaluations.create', $provider->id) }}" class="btn btn-sm btn-primary">Évaluer</a>
+                        <a href="{{ route('admin.evaluations.show', $provider->id) }}" class="btn btn-sm btn-info ms-1">Voir évaluations</a>
                     </td>
                 </tr>
             @endforeach

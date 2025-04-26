@@ -58,7 +58,8 @@ class DashboardController extends Controller
         // Get recent complaints with filters
         $recentComplaints = $query->latest()
             ->with('assignedUser')
-            ->paginate(10);
+            ->take(10)
+            ->get();
 
         return view('admin.dashboard', compact(
             'statistics',

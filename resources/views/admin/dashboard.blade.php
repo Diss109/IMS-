@@ -148,49 +148,32 @@
                 </table>
                 @if($recentComplaints->isEmpty())
                     <div class="text-center py-4 text-muted">
-                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <i class="fas fa-inbox fa-1x mb-2"></i>
                         <p>Aucune réclamation trouvée</p>
                     </div>
                 @endif
             </div>
-            {{ $recentComplaints->links() }}
+
         </div>
     </div>
 
-        <!-- Charts Row -->
-        <div class="row">
-            <!-- Evolution Chart -->
-            <div class="col-xl-8 col-lg-7">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Évolution des Réclamations</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-area">
-                            <canvas id="evolutionChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Types Distribution Chart -->
-            <div class="col-xl-4 col-lg-5">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Types de Réclamations</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-pie">
-                            <canvas id="typesChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
 
 @endsection
+
+<style>
+.pagination .page-link,
+.pagination .page-link *,
+.pagination .page-link span,
+.pagination .page-link a {
+    font-size: 1rem !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1.5 !important;
+    vertical-align: middle !important;
+}
+</style>
 
 @section('scripts')
 <script>

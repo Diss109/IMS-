@@ -55,7 +55,18 @@ class ComplaintController extends Controller
             $query->whereDate('created_at', $request->input('date'));
         }
 
-        $complaints = $query->latest()->paginate(15)->appends($request->query());
+        // Search by complaint id or name
+    if ($request->filled('search')) {
+        $search = $request->input('search');
+        $query->where(function ($q) use ($search) {
+            $q->where('id', $search)
+              ->orWhere('first_name', 'like', "%$search%")
+              ->orWhere('last_name', 'like', "%$search%")
+              ->orWhere('company_name', 'like', "%$search%")
+              ;
+        });
+    }
+    $complaints = $query->latest()->paginate(10)->appends($request->query());
         $users = User::where('role', '!=', User::ROLE_ADMIN)->get();
 
         return view('admin.complaints.index', compact('complaints', 'users'));

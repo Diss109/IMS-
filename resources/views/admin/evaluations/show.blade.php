@@ -5,7 +5,7 @@
 <div class="container mt-4">
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Détail de l'évaluation</h3>
+
         </div>
         <div class="card-body">
             <div class="mb-3">
@@ -41,7 +41,8 @@
                 <strong>Commentaire global :</strong><br>
                 <div class="border rounded p-2 bg-light">{{ $evaluation->global_comment ?? '-' }}</div>
             </div>
-            <a href="{{ url()->previous() }}" class="btn btn-secondary">Retour</a>
+            <a href="{{ route('admin.evaluations.edit', $evaluation->id) }}" class="btn btn-warning me-2">Éditer</a>
+<a href="{{ route('admin.evaluations.index') }}" class="btn btn-secondary">Retour</a>
         </div>
     </div>
 </div>

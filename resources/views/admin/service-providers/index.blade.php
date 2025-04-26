@@ -14,11 +14,21 @@
 
             </div>
         </div>
-        <div class="mb-4 d-flex justify-content-end">
-            <a href="{{ route('admin.service-providers.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Ajouter un prestataire
-            </a>
-        </div>
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+        <form method="GET" action="" class="d-flex gap-2 align-items-center mb-0">
+            <input type="text" name="search" class="form-control" placeholder="Rechercher par nom ou email..." value="{{ request('search') }}">
+            <select name="category" class="form-select">
+                <option value="">Toutes les catégories</option>
+                <option value="armateur" {{ request('category') == 'armateur' ? 'selected' : '' }}>Armateur</option>
+                <option value="autre" {{ request('category') == 'autre' ? 'selected' : '' }}>Autre</option>
+                <!-- Ajoutez d'autres catégories ici -->
+            </select>
+            <button class="btn btn-primary" type="submit">Rechercher</button>
+        </form>
+        <a href="{{ route('admin.service-providers.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter un prestataire
+        </a>
+    </div>
 
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -56,9 +66,7 @@
        class="btn btn-sm btn-warning">
         <i class="fas fa-edit"></i>
     </a>
-    <a href="{{ route('admin.evaluations.create', $provider->id) }}" class="btn btn-sm btn-primary">
-        <i class="fas fa-check"></i> Évaluer
-    </a>
+
     <form action="{{ route('admin.service-providers.destroy', $provider) }}"
           method="POST"
           class="d-inline"

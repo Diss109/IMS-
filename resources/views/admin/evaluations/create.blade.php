@@ -5,7 +5,7 @@
 <div class="container mt-4">
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">Nouvelle Évaluation (Armateur)</h2>
+            <h2 class="mb-0">Nouvelle Évaluation {{ isset($serviceProvider) ? $serviceProvider->name . ' ' : '' }}({{ __(ucfirst($serviceProvider->service_type ?? 'Armateur')) }})</h2>
         </div>
         <div class="card-body">
             <form method="POST" action="{{ route('admin.evaluations.store') }}">

@@ -6,6 +6,14 @@
 
     @include('admin.complaints.filters')
 
+    <!-- Search form -->
+    <form method="GET" action="" class="mb-3">
+        <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Rechercher par ID ou nom..." value="{{ request('search') }}">
+            <button class="btn btn-primary" type="submit">Rechercher</button>
+        </div>
+    </form>
+
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -106,10 +114,34 @@
                 </table>
             </div>
 
-            <div class="mt-4">
-                {{ $complaints->links() }}
-            </div>
+
+        </div>
+        <div class="mt-4 d-flex justify-content-center gap-2">
+            @if ($complaints->onFirstPage())
+                <button class="btn btn-secondary" disabled>Précédent</button>
+            @else
+                <a class="btn btn-primary" href="{{ $complaints->previousPageUrl() }}">Précédent</a>
+            @endif
+            <span class="align-self-center">Page {{ $complaints->currentPage() }} / {{ $complaints->lastPage() }}</span>
+            @if ($complaints->hasMorePages())
+                <a class="btn btn-primary" href="{{ $complaints->nextPageUrl() }}">Suivant</a>
+            @else
+                <button class="btn btn-secondary" disabled>Suivant</button>
+            @endif
         </div>
     </div>
 </div>
+<style>
+.pagination .page-link,
+.pagination .page-link *,
+.pagination .page-link span,
+.pagination .page-link a {
+    font-size: 1rem !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1.5 !important;
+    vertical-align: middle !important;
+}
+</style>
+
 @endsection

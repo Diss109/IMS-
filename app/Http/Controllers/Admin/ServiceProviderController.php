@@ -25,8 +25,9 @@ class ServiceProviderController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:service_providers',
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'address' => 'required|string|max:500',
+            'service_type' => 'required|string',
         ]);
 
         ServiceProvider::create($validated);
@@ -50,8 +51,9 @@ class ServiceProviderController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:service_providers,email,' . $serviceProvider->id,
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'address' => 'required|string|max:500',
+            'service_type' => 'required|string',
         ]);
 
         $serviceProvider->update($validated);

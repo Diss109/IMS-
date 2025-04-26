@@ -100,16 +100,36 @@ class EvaluationController extends Controller
     public function update(Request $request, Evaluation $evaluation)
     {
         $validated = $request->validate([
-            'transporter_id' => 'required|exists:transporters,id',
-            'service_provider_id' => 'required|exists:service_providers,id',
-            'score' => 'required|numeric|min:0|max:100',
-            'comments' => 'nullable|string',
             'evaluation_date' => 'required|date',
+            'global_comment' => 'nullable|string',
+            'scores' => 'required|array',
+            'scores.*' => 'numeric|min:0|max:10',
         ]);
 
-        $evaluation->update($validated);
+        $evaluation->update([
+            'evaluation_date' => $validated['evaluation_date'],
+            'global_comment' => $validated['global_comment'],
+        ]);
 
-        return redirect()->route('admin.evaluations.index')
+        $total = 0;
+        $maxTotal = 0;
+
+        foreach ($evaluation->scores as $score) {
+            $newScore = $validated['scores'][$score->id] ?? $score->score;
+            $score->update(['score' => $newScore]);
+
+            // Recalculate total score (same logic as in store)
+            $mainWeight = $score->main_weight;
+            $subWeight = $score->sub_weight;
+            $subSum = $evaluation->scores->where('main_criterion', $score->main_criterion)->sum('sub_weight');
+            $total += $newScore * $mainWeight * ($subWeight / $subSum);
+            $maxTotal += 10 * $mainWeight * ($subWeight / $subSum);
+        }
+
+        $evaluation->total_score = $maxTotal ? round($total * 100 / $maxTotal, 2) : 0;
+        $evaluation->save();
+
+        return redirect()->route('admin.evaluations.show', $evaluation->id)
             ->with('success', 'Évaluation mise à jour avec succès.');
     }
 
