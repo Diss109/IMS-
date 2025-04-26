@@ -18,11 +18,16 @@
         <form method="GET" action="" class="d-flex gap-2 align-items-center mb-0">
             <input type="text" name="search" class="form-control" placeholder="Rechercher par nom ou email..." value="{{ request('search') }}">
             <select name="category" class="form-select">
-                <option value="">Toutes les catégories</option>
-                <option value="armateur" {{ request('category') == 'armateur' ? 'selected' : '' }}>Armateur</option>
-                <option value="autre" {{ request('category') == 'autre' ? 'selected' : '' }}>Autre</option>
-                <!-- Ajoutez d'autres catégories ici -->
-            </select>
+    <option value="">Toutes les catégories</option>
+    <option value="armateur" {{ request('category') == 'armateur' ? 'selected' : '' }}>Armateur</option>
+    <option value="commercial_maritime" {{ request('category') == 'commercial_maritime' ? 'selected' : '' }}>Commercial Maritime</option>
+    <option value="exploitation_maritime" {{ request('category') == 'exploitation_maritime' ? 'selected' : '' }}>Exploitation Maritime</option>
+    <option value="commercial_route" {{ request('category') == 'commercial_route' ? 'selected' : '' }}>Commercial Route</option>
+    <option value="exploitation_route" {{ request('category') == 'exploitation_route' ? 'selected' : '' }}>Exploitation Route</option>
+    <option value="commercial_aerien" {{ request('category') == 'commercial_aerien' ? 'selected' : '' }}>Commercial Aérien</option>
+    <option value="exploitation_aerien" {{ request('category') == 'exploitation_aerien' ? 'selected' : '' }}>Exploitation Aérien</option>
+    <option value="autre" {{ request('category') == 'autre' ? 'selected' : '' }}>Autre</option>
+</select>
             <button class="btn btn-primary" type="submit">Rechercher</button>
         </form>
         <a href="{{ route('admin.service-providers.create') }}" class="btn btn-primary">

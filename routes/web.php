@@ -72,9 +72,10 @@ Route::middleware(['web'])->group(function () {
     // User dashboard routes
     Route::middleware(['auth'])->group(function () {
         Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
-        Route::get('/user/complaints', [UserDashboardController::class, 'complaints'])->name('user.complaints');
-        Route::get('/user/complaints/{complaint}', [UserDashboardController::class, 'show'])->name('user.complaints.show');
-        Route::put('/user/complaints/{complaint}', [UserDashboardController::class, 'update'])->name('user.complaints.update');
+        // User complaints routes (new)
+        Route::get('/user/complaints', [App\Http\Controllers\User\ComplaintController::class, 'index'])->name('user.complaints.index');
+        Route::get('/user/complaints/{id}', [App\Http\Controllers\User\ComplaintController::class, 'show'])->name('user.complaints.show');
+        Route::put('/user/complaints/{id}/status', [App\Http\Controllers\User\ComplaintController::class, 'updateStatus'])->name('user.complaints.updateStatus');
     });
 
     // Admin routes

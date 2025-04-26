@@ -16,7 +16,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('user.complaints.*') ? 'active' : '' }}"
-                       href="{{ route('user.complaints') }}">
+                       href="{{ route('user.complaints.index') }}">
                         <i class="fas fa-exclamation-circle"></i> Mes réclamations
                     </a>
                 </li>
