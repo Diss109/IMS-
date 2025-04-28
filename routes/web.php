@@ -78,7 +78,7 @@ Route::middleware(['web'])->group(function () {
         Route::put('/user/complaints/{id}/status', [App\Http\Controllers\User\ComplaintController::class, 'updateStatus'])->name('user.complaints.updateStatus');
     });
 
-    // Admin routes
+    // Admin routes - protected at the controller level
     Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::resource('complaints', AdminComplaintController::class);

@@ -17,11 +17,20 @@ class UserDashboardController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
-        $complaints = Complaint::where('assigned_to', $user->id)
-            ->latest()
-            ->paginate(10);
+        // Get current user ID for comparison
+        $userId = $user->id;
+        
+        // Show all complaints in the dashboard, not just assigned ones
+        $complaints = Complaint::latest()->paginate(10);
+        
+        // Add a property to each complaint indicating if current user is assigned to it
+        foreach ($complaints as $complaint) {
+            $complaint->is_assigned_to_current_user = ($complaint->assigned_to == $userId);
+        }
 
-        $totalComplaints = $complaints->total();
+        // Count only complaints assigned to the user for statistics
+        $assignedComplaints = Complaint::where('assigned_to', $userId)->count();
+        $totalComplaints = $assignedComplaints;
         $resolvedComplaints = Complaint::where('assigned_to', $user->id)
             ->where('status', 'résolu')
             ->count();

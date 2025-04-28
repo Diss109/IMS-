@@ -96,14 +96,14 @@
 </td>
                                     <td>{{ $complaint->created_at->format('d/m/Y H:i') }}</td>
                                     <td>
-    @if($complaint->assigned_to === Auth::id())
-    <a href="{{ route('user.complaints.show', $complaint->id) }}" class="btn btn-primary btn-sm">
-        <i class="fas fa-eye"></i> Voir
-    </a>
-@else
-    -
-@endif
-</td>
+                                        @if($complaint->is_assigned_to_current_user)
+                                            <a href="{{ route('user.complaints.show', $complaint->id) }}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                             @if($complaints->isEmpty())

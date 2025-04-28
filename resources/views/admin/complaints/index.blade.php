@@ -90,6 +90,7 @@
                                            title="Voir les détails">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        @if(auth()->user()->isAdmin())
                                         <form action="{{ route('admin.complaints.destroy', $complaint) }}"
                                               method="POST"
                                               class="d-inline"
@@ -102,6 +103,7 @@
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

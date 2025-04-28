@@ -185,16 +185,16 @@
                         <div class="mb-3">
                             <label for="status" class="form-label">Statut actuel</label>
                             <select name="status" class="form-select" required>
-                                <option value="{{ App\Models\Complaint::STATUS_PENDING }}"
-                                        {{ $complaint->status === App\Models\Complaint::STATUS_PENDING ? 'selected' : '' }}>
+                                <option value="en_attente"
+                                        {{ $complaint->status === 'en_attente' ? 'selected' : '' }}>
                                     En attente
                                 </option>
-                                <option value="{{ App\Models\Complaint::STATUS_SOLVED }}"
-                                        {{ $complaint->status === App\Models\Complaint::STATUS_SOLVED ? 'selected' : '' }}>
+                                <option value="résolu"
+                                        {{ $complaint->status === 'résolu' ? 'selected' : '' }}>
                                     Résolu
                                 </option>
-                                <option value="{{ App\Models\Complaint::STATUS_UNSOLVED }}"
-                                        {{ $complaint->status === App\Models\Complaint::STATUS_UNSOLVED ? 'selected' : '' }}>
+                                <option value="non_résolu"
+                                        {{ $complaint->status === 'non_résolu' ? 'selected' : '' }}>
                                     Non résolu
                                 </option>
                             </select>

@@ -10,10 +10,9 @@
         <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ request('search') }}">
         <select name="status" class="form-select">
             <option value="">Tous les statuts</option>
-            <option value="nouveau" {{ request('status') == 'nouveau' ? 'selected' : '' }}>Nouveau</option>
-            <option value="en_cours" {{ request('status') == 'en_cours' ? 'selected' : '' }}>En cours</option>
-            <option value="resolu" {{ request('status') == 'resolu' ? 'selected' : '' }}>Résolu</option>
-            <option value="ferme" {{ request('status') == 'ferme' ? 'selected' : '' }}>Fermé</option>
+            <option value="en_attente" {{ request('status') == 'en_attente' ? 'selected' : '' }}>En attente</option>
+            <option value="résolu" {{ request('status') == 'résolu' ? 'selected' : '' }}>Résolu</option>
+            <option value="non_résolu" {{ request('status') == 'non_résolu' ? 'selected' : '' }}>Non résolu</option>
         </select>
         <button class="btn btn-primary" type="submit">Filtrer</button>
     </form>
@@ -24,7 +23,7 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Titre</th>
+                            <th>Type</th>
                             <th>Client</th>
                             <th>Statut</th>
                             <th>Date</th>
@@ -35,10 +34,38 @@
                         @forelse($complaints as $complaint)
                             <tr>
                                 <td>{{ $complaint->id }}</td>
-                                <td>{{ $complaint->title }}</td>
-                                <td>{{ $complaint->client_name }}</td>
+                                <td>@switch($complaint->complaint_type)
+                                        @case('retard_livraison')
+                                            Retard de livraison
+                                            @break
+                                        @case('retard_chargement')
+                                            Retard de chargement
+                                            @break
+                                        @case('marchandise_endommagée')
+                                            Marchandise endommagée
+                                            @break
+                                        @case('mauvais_comportement')
+                                            Mauvais comportement
+                                            @break
+                                        @default
+                                            Autre
+                                    @endswitch</td>
+                                <td>{{ $complaint->first_name }} {{ $complaint->last_name }}<br>
+                                    <small>{{ $complaint->company_name }}</small></td>
                                 <td>
-                                    <span class="badge bg-info">{{ ucfirst($complaint->status) }}</span>
+                                    @switch($complaint->status)
+                                        @case('en_attente')
+                                            <span class="badge bg-warning">En attente</span>
+                                            @break
+                                        @case('résolu')
+                                            <span class="badge bg-success">Résolu</span>
+                                            @break
+                                        @case('non_résolu')
+                                            <span class="badge bg-danger">Non résolu</span>
+                                            @break
+                                        @default
+                                            <span class="badge bg-secondary">{{ $complaint->status }}</span>
+                                    @endswitch
                                 </td>
                                 <td>{{ $complaint->created_at->format('d/m/Y H:i') }}</td>
                                 <td>
@@ -59,10 +86,9 @@
                                             </div>
                                             <div class="modal-body">
                                                 <select name="status" class="form-select mb-2" required>
-                                                    <option value="nouveau" {{ $complaint->status == 'nouveau' ? 'selected' : '' }}>Nouveau</option>
-                                                    <option value="en_cours" {{ $complaint->status == 'en_cours' ? 'selected' : '' }}>En cours</option>
-                                                    <option value="resolu" {{ $complaint->status == 'resolu' ? 'selected' : '' }}>Résolu</option>
-                                                    <option value="ferme" {{ $complaint->status == 'ferme' ? 'selected' : '' }}>Fermé</option>
+                                                    <option value="en_attente" {{ $complaint->status == 'en_attente' ? 'selected' : '' }}>En attente</option>
+                                                    <option value="résolu" {{ $complaint->status == 'résolu' ? 'selected' : '' }}>Résolu</option>
+                                                    <option value="non_résolu" {{ $complaint->status == 'non_résolu' ? 'selected' : '' }}>Non résolu</option>
                                                 </select>
                                                 <textarea name="note" class="form-control" rows="2" placeholder="Ajouter une note (optionnel)">{{ $complaint->note }}</textarea>
                                             </div>

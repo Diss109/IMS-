@@ -196,31 +196,43 @@
             <div class="sidebar">
                 
                 <nav class="nav flex-column mt-3">
-                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/speedometer2.svg" class="sidebar-menu-logo" alt="Dashboard" style="filter: invert(1);">
-    <span class="sidebar-link-text">Tableau de bord</span>
-</a>
-<a href="{{ route('admin.complaints.index') }}" class="nav-link {{ request()->routeIs('admin.complaints.*') ? 'active' : '' }}">
-    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/exclamation-triangle.svg" class="sidebar-menu-logo" alt="Réclamations" style="filter: invert(1);">
-    <span class="sidebar-link-text">Réclamations</span>
-</a>
-<a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
-    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/truck.svg" class="sidebar-menu-logo" alt="Prestataires" style="filter: invert(1);">
-    <span class="sidebar-link-text">Prestataires</span>
-</a>
-<a href="{{ route('admin.evaluations.index') }}" class="nav-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
-    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/star.svg" class="sidebar-menu-logo" alt="Évaluations" style="filter: invert(1);">
-    <span class="sidebar-link-text">Évaluations</span>
-</a>
-<a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
-    
-    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/graph-up.svg" class="sidebar-menu-logo" alt="KPIs" style="filter: invert(1);">
-    <span class="sidebar-link-text">KPIs</span>
-</a>
-<a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/people.svg" class="sidebar-menu-logo" alt="Gestion des Utilisateurs" style="filter: invert(1);">
-    <span class="sidebar-link-text">Gestion des Utilisateurs</span>
-</a>
+                    @if(Auth::user()->role === \App\Models\User::ROLE_ADMIN)
+                        <!-- Admin-only links -->
+                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/speedometer2.svg" class="sidebar-menu-logo" alt="Dashboard" style="filter: invert(1);">
+                            <span class="sidebar-link-text">Tableau de bord Admin</span>
+                        </a>
+                        <a href="{{ route('admin.complaints.index') }}" class="nav-link {{ request()->routeIs('admin.complaints.*') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/exclamation-triangle.svg" class="sidebar-menu-logo" alt="Réclamations" style="filter: invert(1);">
+                            <span class="sidebar-link-text">Toutes les réclamations</span>
+                        </a>
+                        <a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/truck.svg" class="sidebar-menu-logo" alt="Prestataires" style="filter: invert(1);">
+                            <span class="sidebar-link-text">Prestataires</span>
+                        </a>
+                        <a href="{{ route('admin.evaluations.index') }}" class="nav-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/star.svg" class="sidebar-menu-logo" alt="Évaluations" style="filter: invert(1);">
+                            <span class="sidebar-link-text">Évaluations</span>
+                        </a>
+                        <a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/graph-up.svg" class="sidebar-menu-logo" alt="KPIs" style="filter: invert(1);">
+                            <span class="sidebar-link-text">KPIs</span>
+                        </a>
+                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/people.svg" class="sidebar-menu-logo" alt="Gestion des Utilisateurs" style="filter: invert(1);">
+                            <span class="sidebar-link-text">Gestion des Utilisateurs</span>
+                        </a>
+                    @else
+                        <!-- Regular user links -->
+                        <a href="{{ route('user.dashboard') }}" class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/speedometer2.svg" class="sidebar-menu-logo" alt="Dashboard" style="filter: invert(1);">
+                            <span class="sidebar-link-text">Tableau de bord</span>
+                        </a>
+                        <a href="{{ route('user.complaints.index') }}" class="nav-link {{ request()->routeIs('user.complaints.*') ? 'active' : '' }}">
+                            <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/exclamation-triangle.svg" class="sidebar-menu-logo" alt="Réclamations" style="filter: invert(1);">
+                            <span class="sidebar-link-text">Mes réclamations</span>
+                        </a>
+                    @endif
 <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
     <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/box-arrow-right.svg" class="sidebar-menu-logo" alt="Déconnexion" style="filter: invert(1);">
     <span class="sidebar-link-text">Déconnexion</span>
