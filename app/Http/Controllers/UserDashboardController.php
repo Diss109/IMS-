@@ -41,13 +41,16 @@ class UserDashboardController extends Controller
             ->where('status', 'non_résolu')
             ->count();
 
+        $unreadNotificationsCount = \App\Models\Notification::where('user_id', $userId)->where('is_read', false)->count();
+
         return view('user.dashboard', compact(
             'complaints',
             'totalComplaints',
             'resolvedComplaints',
             'pendingComplaints',
             'unsolvedComplaints',
-            'user'
+            'user',
+            'unreadNotificationsCount'
         ));
     }
 

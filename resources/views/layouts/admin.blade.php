@@ -190,11 +190,13 @@
     </style>
 </head>
 <body>
-    <div class="container-fluid">
+
+
+            </div>
+        </div>
         <div class="row">
             <!-- Sidebar -->
             <div class="sidebar">
-                
                 <nav class="nav flex-column mt-3">
                     @if(Auth::user()->role === \App\Models\User::ROLE_ADMIN)
                         <!-- Admin-only links -->

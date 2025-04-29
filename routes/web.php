@@ -57,15 +57,17 @@ Route::get('/test-complaint-insert', function() {
 
 // Authentication Routes
 Route::middleware(['web'])->group(function () {
+    // Unified dashboard route: redirects users based on role
     Route::get('/dashboard', function () {
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-
         $user = Auth::user();
+        // If admin, go to admin dashboard
         if ($user->role === User::ROLE_ADMIN) {
             return redirect()->route('admin.dashboard');
         }
+        // Otherwise, go to user dashboard
         return redirect()->route('user.dashboard');
     })->name('dashboard');
 
@@ -76,6 +78,10 @@ Route::middleware(['web'])->group(function () {
         Route::get('/user/complaints', [App\Http\Controllers\User\ComplaintController::class, 'index'])->name('user.complaints.index');
         Route::get('/user/complaints/{id}', [App\Http\Controllers\User\ComplaintController::class, 'show'])->name('user.complaints.show');
         Route::put('/user/complaints/{id}/status', [App\Http\Controllers\User\ComplaintController::class, 'updateStatus'])->name('user.complaints.updateStatus');
+        // User notification routes
+        Route::get('/user/notifications', [App\Http\Controllers\User\NotificationController::class, 'index'])->name('user.notifications.index');
+        Route::delete('/user/notifications/{id}', [App\Http\Controllers\User\NotificationController::class, 'destroy'])->name('user.notifications.destroy');
+        Route::post('/user/notifications/mark-all-read', [App\Http\Controllers\User\NotificationController::class, 'markAllRead'])->name('user.notifications.markAllRead');
     });
 
     // Admin routes - protected at the controller level

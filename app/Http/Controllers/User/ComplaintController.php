@@ -30,26 +30,37 @@ class ComplaintController extends Controller
             $query->where('status', $request->input('status'));
         }
         $complaints = $query->latest()->paginate(10)->appends($request->query());
-        return view('user.complaints.index', compact('complaints'));
+        $unreadNotificationsCount = \App\Models\Notification::where('user_id', $user->id)->where('is_read', false)->count();
+        return view('user.complaints.index', compact('complaints', 'unreadNotificationsCount'));
     }
+
 
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'status' => 'required|string',
-            'note' => 'nullable|string',
         ]);
         $complaint = Complaint::where('assigned_to', Auth::id())->findOrFail($id);
         $complaint->status = $request->status;
-        $complaint->note = $request->note;
         $complaint->save();
-        // Optionally: trigger notification here
+        // Notify all admins about the status change
+        $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'complaint_status',
+                'message' => 'La réclamation #' . $complaint->id . ' a changé de statut: ' . $complaint->status,
+                'is_read' => false,
+                'related_id' => $complaint->id
+            ]);
+        }
         return redirect()->route('user.complaints.index')->with('success', 'Statut mis à jour avec succès.');
     }
 
     public function show($id)
     {
         $complaint = Complaint::where('assigned_to', Auth::id())->findOrFail($id);
-        return view('user.complaints.show', compact('complaint'));
+        $unreadNotificationsCount = \App\Models\Notification::where('user_id', \Illuminate\Support\Facades\Auth::id())->where('is_read', false)->count();
+        return view('user.complaints.show', compact('complaint', 'unreadNotificationsCount'));
     }
 }

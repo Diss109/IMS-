@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DashboardController extends BaseAdminController
-{
+{ // No constructor needed; all middleware logic is handled by BaseAdminController.
     private $complaintTypes = [
         'retard_livraison',
         'retard_chargement',

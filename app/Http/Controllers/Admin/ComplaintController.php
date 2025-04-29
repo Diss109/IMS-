@@ -96,12 +96,30 @@ class ComplaintController extends BaseAdminController
             'assigned_to' => 'nullable|exists:users,id'
         ]);
 
+        $oldAssignedTo = $complaint->assigned_to;
         if ($request->has('assigned_to') && $user->isAdmin()) {
             $complaint->assigned_to = $validated['assigned_to'];
         }
 
         $oldStatus = $complaint->status;
         $complaint->update($validated);
+        // Notify the user if they are newly assigned a complaint
+        if (isset($validated['assigned_to']) && $oldAssignedTo != $validated['assigned_to'] && $validated['assigned_to']) {
+            \Log::info('Attempting to create notification for assigned complaint', [
+                'user_id' => $validated['assigned_to'],
+                'complaint_id' => $complaint->id,
+                'old_assigned' => $oldAssignedTo,
+                'new_assigned' => $validated['assigned_to']
+            ]);
+            $notification = \App\Models\Notification::create([
+                'user_id' => $validated['assigned_to'],
+                'type' => 'complaint_assignment',
+                'message' => 'Vous avez été assigné à la réclamation #' . $complaint->id,
+                'is_read' => false,
+                'related_id' => $complaint->id
+            ]);
+            \Log::info('Notification created', ['notification' => $notification]);
+        }
         // Create a notification for ALL admins if status changed
         if ($oldStatus !== $validated['status']) {
             $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
