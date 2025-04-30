@@ -5,7 +5,6 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="mb-4">
-        <h1 class="h3 text-gray-800">Tableau de bord KPI</h1>
     </div>
 
     <!-- KPI Cards -->
