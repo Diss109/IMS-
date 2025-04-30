@@ -82,6 +82,13 @@ Route::middleware(['web'])->group(function () {
         Route::get('/user/notifications', [App\Http\Controllers\User\NotificationController::class, 'index'])->name('user.notifications.index');
         Route::delete('/user/notifications/{id}', [App\Http\Controllers\User\NotificationController::class, 'destroy'])->name('user.notifications.destroy');
         Route::post('/user/notifications/mark-all-read', [App\Http\Controllers\User\NotificationController::class, 'markAllRead'])->name('user.notifications.markAllRead');
+        
+        // User notification AJAX endpoints
+        Route::get('/user/notifications/latest', [App\Http\Controllers\User\NotificationController::class, 'getLatest'])->name('user.notifications.latest');
+        Route::get('/user/notifications/unread-count', [App\Http\Controllers\User\NotificationController::class, 'getUnreadCount'])->name('user.notifications.unreadCount');
+        Route::post('/user/notifications/mark-read', [App\Http\Controllers\User\NotificationController::class, 'markRead'])->name('user.notifications.markRead');
+        Route::post('/user/notifications/delete', [App\Http\Controllers\User\NotificationController::class, 'ajaxDestroy'])->name('user.notifications.ajaxDestroy');
+        Route::post('/user/notifications/delete-all', [App\Http\Controllers\User\NotificationController::class, 'destroyAll'])->name('user.notifications.destroyAll');
     });
 
     // Admin routes - protected at the controller level
@@ -90,7 +97,13 @@ Route::middleware(['web'])->group(function () {
         Route::resource('complaints', AdminComplaintController::class);
         Route::resource('transporters', TransporterController::class);
         Route::resource('service-providers', ServiceProviderController::class);
-        Route::resource('kpis', KpiController::class);
+        // KPI Dashboard with Google Charts
+        Route::get('/kpis', [KpiController::class, 'index'])->name('kpis.index');
+        Route::get('/kpis/charts/trend', [\App\Http\Controllers\Admin\GoogleChartController::class, 'trendChart'])->name('kpis.charts.trend');
+        Route::get('/kpis/charts/type', [\App\Http\Controllers\Admin\GoogleChartController::class, 'typeChart'])->name('kpis.charts.type');
+        Route::get('/kpis/charts/status', [\App\Http\Controllers\Admin\GoogleChartController::class, 'statusChart'])->name('kpis.charts.status');
+        Route::get('/kpis/charts/urgency', [\App\Http\Controllers\Admin\GoogleChartController::class, 'urgencyChart'])->name('kpis.charts.urgency');
+        Route::resource('kpis', KpiController::class)->except(['index']);
         Route::get('service-providers/{id}/evaluations/create', [EvaluationController::class, 'create'])->name('evaluations.create');
         Route::resource('evaluations', EvaluationController::class)->except(['create']);
         Route::resource('users', UserController::class);

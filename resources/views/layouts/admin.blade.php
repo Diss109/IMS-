@@ -280,29 +280,40 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const isAdmin = {{ Auth::user()->isAdmin() ? 'true' : 'false' }};
+            const notificationEndpoints = {
+                unreadCount: isAdmin ? '/admin/notifications/unread-count' : '/user/notifications/unread-count',
+                latest: isAdmin ? '/admin/notifications/latest' : '/user/notifications/latest',
+                markRead: isAdmin ? '/admin/notifications/mark-read' : '/user/notifications/mark-read',
+                delete: isAdmin ? '/admin/notifications/delete' : '/user/notifications/delete',
+                deleteAll: isAdmin ? '/admin/notifications/delete-all' : '/user/notifications/delete-all'
+            };
+            
             function updateNotificationBadge(count) {
                 var badge = document.getElementById('notification-badge');
                 if (!badge) return;
+                
                 if (count > 0) {
-                    badge.style.display = '';
-                    badge.textContent = count;
+                    badge.textContent = count > 9 ? '9+' : count;
+                    badge.style.display = 'flex';
                 } else {
                     badge.style.display = 'none';
                 }
             }
 
             function fetchUnreadNotifications() {
-                fetch('/admin/notifications/unread-count')
-                    .then(response => response.json())
+                fetch(notificationEndpoints.unreadCount)
+                    .then(resp => resp.json())
                     .then(data => {
                         updateNotificationBadge(data.count);
-                    });
+                    })
+                    .catch(err => console.error('Error fetching notification count:', err));
             }
 
-            // Poll every 10 seconds
-            setInterval(fetchUnreadNotifications, 10000);
-            // Also fetch immediately on page load
+            // Initial fetch of unread notifications
             fetchUnreadNotifications();
+            // Refresh every minute
+            setInterval(fetchUnreadNotifications, 60000);
 
             const bell = document.getElementById('notification-bell');
             const dropdown = document.getElementById('notification-dropdown');
@@ -315,22 +326,13 @@
                         dropdown.style.display = 'none';
                     } else {
                         // Mark all as read when opening dropdown
-                        fetch('/admin/notifications/mark-all-read', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            },
-                            body: JSON.stringify({})
-                        }).then(() => {
-                            fetchUnreadNotifications();
-                        });
                         dropdown.style.display = 'block';
+                        // Get latest notifications
                         notifList.innerHTML = '<li class="list-group-item text-center text-muted">Chargement...</li>';
-                        fetch('/admin/notifications/latest')
-                            .then(resp => resp.json())
+                        fetch(notificationEndpoints.latest)
+                            .then(response => response.json())
                             .then(data => {
-                                if (!data.notifications || data.notifications.length === 0) {
+                                if (data.notifications.length === 0) {
                                     notifList.innerHTML = '<li class="list-group-item text-center text-muted">Aucune notification récente.</li>';
                                     return;
                                 }
@@ -353,7 +355,7 @@
     delBtn.title = 'Supprimer';
     delBtn.onclick = function(e) {
         e.stopPropagation();
-        fetch('/admin/notifications/delete', {
+        fetch(notificationEndpoints.delete, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -371,7 +373,7 @@
     // Mark as read and redirect on click (except X)
     li.onclick = function(ev) {
         if (ev.target === delBtn || delBtn.contains(ev.target)) return;
-        fetch('/admin/notifications/mark-read', {
+        fetch(notificationEndpoints.markRead, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -383,7 +385,9 @@
             li.classList.add('bg-white','text-muted');
             fetchUnreadNotifications();
             if (n.related_id) {
-                window.location.href = '/admin/complaints/' + n.related_id;
+                // Use the appropriate URL based on user role
+                const complaintsUrl = isAdmin ? '/admin/complaints/' : '/user/complaints/';
+                window.location.href = complaintsUrl + n.related_id;
             }
         });
     };
@@ -397,7 +401,7 @@ if (data.notifications.length > 0) {
     clearBtn.onclick = function(e) {
         e.stopPropagation();
         if (!confirm('Effacer toutes les notifications ?')) return;
-        fetch('/admin/notifications/delete-all', {
+        fetch(notificationEndpoints.deleteAll, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

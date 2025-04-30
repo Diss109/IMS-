@@ -30,7 +30,14 @@ class ComplaintController extends Controller
 
             // Check urgency format
             \Log::info('Urgency value received: "' . $request->input('urgence') . '"');
-
+            
+            // Log subject value specifically
+            \Log::info('Subject value received: "' . $request->input('sujet') . '"');
+            
+            // Normalize complaint type if it's "autre"
+            $complaintType = $request->input('sujet', 'autre');
+            \Log::info('Using complaint_type: ' . $complaintType);
+            
             // Use a guaranteed working direct insert like in our test endpoint
             $companyName = $request->input('company_name');
             if (!$companyName) {
@@ -38,14 +45,21 @@ class ComplaintController extends Controller
             } elseif (strtolower(trim($companyName)) === 'non') {
                 $companyName = 'sans entreprise';
             }
+            
+            // Make sure urgency level is valid
+            $urgencyLevel = $request->input('urgence', 'medium');
+            if (!in_array($urgencyLevel, ['low', 'medium', 'high', 'critical'])) {
+                $urgencyLevel = 'medium';
+            }
+            
             $id = \DB::table('complaints')->insertGetId([
                 'company_name' => $companyName,
                 'first_name' => $request->input('nom', 'Client'),
                 'last_name' => 'Chatbot Client',
                 'email' => $request->input('email', 'chatbot@example.com'),
-                'complaint_type' => $request->input('sujet', 'autre'),
+                'complaint_type' => $complaintType,
                 'description' => $request->input('description', 'No description provided'),
-                'urgency_level' => $request->input('urgence', 'medium'),
+                'urgency_level' => $urgencyLevel,
                 'status' => 'en_attente',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -89,10 +103,63 @@ class ComplaintController extends Controller
         catch (\Exception $e) {
             \Log::error('CHATBOT ERROR: ' . $e->getMessage());
             \Log::error('In file: ' . $e->getFile() . ' line ' . $e->getLine());
+            \Log::error('Full trace: ' . $e->getTraceAsString());
+            
+            // Check if this is a database constraint error (likely enum issue)
+            if (strpos($e->getMessage(), 'Data too long') !== false ||
+                strpos($e->getMessage(), 'Incorrect string value') !== false ||
+                strpos($e->getMessage(), 'Data truncated') !== false ||
+                strpos($e->getMessage(), 'Column') !== false) {
+                
+                \Log::error('Possible database constraint error with complaint_type');
+                
+                // Try to resubmit with a definitely valid value
+                try {
+                    $id = \DB::table('complaints')->insertGetId([
+                        'company_name' => $request->input('company_name', 'Particulier'),
+                        'first_name' => $request->input('nom', 'Client'),
+                        'last_name' => 'Chatbot Client',
+                        'email' => $request->input('email', 'chatbot@example.com'),
+                        'complaint_type' => 'autre', // Force to 'autre' type
+                        'description' => $request->input('description', 'No description provided') . ' (Type original: ' . $request->input('sujet', 'autre') . ')',
+                        'urgency_level' => 'medium',
+                        'status' => 'en_attente',
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    
+                    \Log::info('RECOVERED - complaint created with ID: ' . $id . ' (forced type: autre)');
+                    
+                    // Notifications code
+                    try {
+                        $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
+                        foreach ($admins as $admin) {
+                            Notification::create([
+                                'user_id' => $admin->id,
+                                'type' => 'new_complaint',
+                                'message' => 'Nouvelle réclamation soumise: #' . $id . ' - autre',
+                                'is_read' => false,
+                                'related_id' => $id
+                            ]);
+                        }
+                    } catch (\Exception $notifEx) {
+                        \Log::warning('Notification creation failed for recovery: ' . $notifEx->getMessage());
+                    }
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Votre réclamation a été envoyée avec succès.',
+                        'id' => $id
+                    ]);
+                    
+                } catch (\Exception $e2) {
+                    \Log::error('RECOVERY FAILED: ' . $e2->getMessage());
+                }
+            }
             
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue lors du traitement de votre réclamation: ' . $e->getMessage()
+                'message' => 'Une erreur est survenue lors du traitement de votre réclamation. Veuillez réessayer.'
             ], 500);
         }
     }

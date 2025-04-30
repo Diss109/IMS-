@@ -425,14 +425,24 @@ function submitComplaint() {
     formData.append('nom', answers['nom'] || '');
     formData.append('company_name', (answers['company_name'] && answers['company_name'].toLowerCase() !== 'non') ? answers['company_name'] : '');
     formData.append('email', answers['email'] || '');
-    formData.append('sujet', answers['sujet'] || '');
+    
+    // Make sure the sujet value is valid before submission
+    let sujetValue = answers['sujet'] || 'autre';
+    // Validate that the sujet is one of the allowed values
+    const validSujets = ['retard_livraison', 'retard_chargement', 'marchandise_endommagée', 'mauvais_comportement', 'autre'];
+    if (!validSujets.includes(sujetValue)) {
+        console.warn('Invalid sujet value:', sujetValue, 'defaulting to "autre"');
+        sujetValue = 'autre';
+    }
+    formData.append('sujet', sujetValue);
+    
     formData.append('description', answers['description'] || '');
     formData.append('urgence', answers['urgence'] || '');
     
     // Log each form field for debugging
     console.log('nom:', answers['nom']);
     console.log('email:', answers['email']);
-    console.log('sujet:', answers['sujet']);
+    console.log('sujet:', sujetValue); // Log the validated value
     console.log('description:', answers['description']);
     console.log('urgence:', answers['urgence']);
     
