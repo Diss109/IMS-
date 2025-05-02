@@ -249,9 +249,11 @@
             <div class="main-content">
     <div class="d-flex justify-content-between align-items-center" style="gap:16px; margin-bottom: 20px; padding-bottom: 0;">
         <div>
-            <h1 class="dashboard-title mb-0" style="font-size:2rem;padding-left: 15px; margin-top: 15px;">
-                @yield('page_title', 'Tableau de bord')
-            </h1>
+            @hasSection('page_title')
+                <h1 class="dashboard-title mb-0" style="font-size:2rem;padding-left: 15px; margin-top: 15px;">
+                    @yield('page_title')
+                </h1>
+            @endif
         </div>
         <div class="d-flex align-items-center" style="gap:16px;">
             <span class="dashboard-username dashboard-username-small">{{ Auth::user()->name }}</span>
