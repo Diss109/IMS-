@@ -115,6 +115,33 @@ Route::middleware(['web'])->group(function () {
         Route::post('/notifications/delete-all', [App\Http\Controllers\NotificationController::class, 'destroyAll'])->middleware(['auth']);
 
         // Notification endpoints
+        Route::get('/notifications/latest', function(Illuminate\Http\Request $request) {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['notifications' => []]);
+            }
+            
+            $notifications = Notification::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get(['id', 'message', 'type', 'is_read', 'created_at']);
+                
+            return response()->json(['notifications' => $notifications]);
+        });
+
+        Route::get('/notifications/unread-count', function(Illuminate\Http\Request $request) {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['count' => 0]);
+            }
+            
+            $count = Notification::where('user_id', $user->id)
+                ->where('is_read', false)
+                ->count();
+                
+            return response()->json(['count' => $count]);
+        });
+
         Route::post('/notifications/mark-all-read', function(Illuminate\Http\Request $request) {
             $user = Auth::user();
             if (!$user || !$user->isAdmin()) {
@@ -122,17 +149,6 @@ Route::middleware(['web'])->group(function () {
             }
             Notification::where('user_id', $user->id)->where('is_read', false)->update(['is_read' => true]);
             return response()->json(['success' => true]);
-        });
-        Route::get('/notifications/latest', function(Illuminate\Http\Request $request) {
-            $user = Auth::user();
-            if (!$user || !$user->isAdmin()) {
-                return response()->json(['notifications' => []]);
-            }
-            $notifications = Notification::where('user_id', $user->id)
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get();
-            return response()->json(['notifications' => $notifications]);
         });
         Route::post('/notifications/mark-read', function(Illuminate\Http\Request $request) {
             $user = Auth::user();
@@ -144,14 +160,6 @@ Route::middleware(['web'])->group(function () {
                 ->where('id', $id)
                 ->update(['is_read' => true]);
             return response()->json(['success' => true]);
-        });
-        Route::get('/notifications/unread-count', function(Illuminate\Http\Request $request) {
-            $user = Auth::user();
-            if (!$user || !$user->isAdmin()) {
-                return response()->json(['count' => 0]);
-            }
-            $count = Notification::where('user_id', $user->id)->where('is_read', false)->count();
-            return response()->json(['count' => $count]);
         });
     });
 });

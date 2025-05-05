@@ -69,6 +69,19 @@ class ComplaintController extends Controller
 
             Log::info('SUCCESS - complaint created with ID: ' . $id);
 
+            // Notify all admins about new complaint
+            $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'type' => 'new_complaint',
+                    'message' => 'Nouvelle réclamation #' . $id . ' via assistant',
+                    'is_read' => false,
+                    'related_id' => $id
+                ]);
+                \Log::info('New complaint notification sent to admin', ['admin_id' => $admin->id]);
+            }
+
             // Create a notification for ALL admins
             try {
                 $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();

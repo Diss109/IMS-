@@ -88,6 +88,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $complaint->assigned_to === $this->id;
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->where('is_read', false);
+    }
+
     /**
      * Send the password reset notification.
      */

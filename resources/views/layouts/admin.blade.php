@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration - IMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <style>
         :root {
             --primary-color: #4361ee;
@@ -343,22 +343,34 @@
 
         /* Notification badge */
         .badge-notification {
-            background-color: var(--danger-color);
-            color: white;
-            border-radius: 50%;
-            padding: 0.35rem 0.65rem;
-            font-size: 0.75rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             position: absolute;
             top: -5px;
             right: -5px;
+            width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            border-radius: 50%;
+            background-color: var(--danger-color);
+            color: white;
+            box-shadow: 0 0 0 2px white;
         }
-
-        /* Page Title */
-        .page-title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            color: var(--dark-color);
-            margin-bottom: 1.5rem;
+        
+        /* Cursor pointer for interactive elements */
+        .cursor-pointer {
+            cursor: pointer !important;
+        }
+        
+        /* Make notification bell stand out more */
+        #notification-bell i {
+            transition: color 0.2s ease;
+        }
+        
+        #notification-bell:hover i {
+            color: var(--primary-color) !important;
         }
 
         /* No data state */
@@ -429,21 +441,30 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="page-title mb-0">@yield('page_title', 'Tableau de bord')</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4 px-4 pt-4">
+            <div class="d-flex align-items-center">
+                <img src="{{ asset('images/logo.jpg') }}" alt="Tuniship Logo" style="height: 40px; width: auto; border-radius: 8px; box-shadow: var(--box-shadow); margin-right: 15px;">
+                <h1 class="page-title mb-0">@yield('page_title', 'Tableau de bord')</h1>
+            </div>
             <div class="d-flex align-items-center gap-3">
                 @if(Auth::check())
-                    <div class="notification-bell-wrapper position-relative" style="cursor: pointer;">
-                        <i class="fas fa-bell text-secondary fs-5" id="notification-bell"></i>
-                        <span id="notification-badge" class="badge-notification" style="display: none;"></span>
-                        <div id="notification-dropdown" class="card shadow position-absolute end-0 mt-2" style="display: none; width: 320px; z-index: 1000;">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
-                                <span class="fw-bold">Notifications récentes</span>
-                                <button type="button" class="btn-close" onclick="document.getElementById('notification-dropdown').style.display='none';"></button>
-                            </div>
-                            <ul id="notification-list" class="list-group list-group-flush" style="max-height: 350px; overflow-y: auto;">
-                                <li class="list-group-item text-center text-muted py-3">Aucune notification récente</li>
+                    <!-- Notification Bell with Dropdown -->
+                    <div class="dropdown">
+                        <div id="notification-bell" class="d-flex align-items-center position-relative" style="cursor: pointer;">
+                            <i class="fas fa-bell text-secondary fs-5"></i>
+                            <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                        </div>
+                        <!-- Notification Dropdown -->
+                        <div id="notification-dropdown" class="dropdown-menu dropdown-menu-end shadow" style="display: none; width: 350px; max-height: 400px; overflow-y: auto; z-index: 1050;">
+                            <h6 class="dropdown-header bg-primary text-white py-2">Notifications</h6>
+                            <ul id="notification-list" class="list-group list-group-flush">
+                                <li class="list-group-item text-center text-muted py-3">Chargement...</li>
                             </ul>
+                            <div class="dropdown-divider"></div>
+                            <div class="d-flex justify-content-between p-2">
+                                <button id="mark-all-read" class="btn btn-sm btn-outline-primary">Tout marquer comme lu</button>
+                                <button id="delete-all" class="btn btn-sm btn-outline-danger">Tout supprimer</button>
+                            </div>
                         </div>
                     </div>
                     <div class="dropdown">
@@ -462,24 +483,23 @@
                             </li>
                         </ul>
                     </div>
-                    <img src="{{ asset('images/logo.jpg') }}" alt="Tuniship Logo" style="height: 40px; width: auto; border-radius: 8px; box-shadow: var(--box-shadow);">
                 @endif
             </div>
         </div>
+        <div class="px-4 pb-4">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
         @yield('content')
     </div>
@@ -508,29 +528,52 @@
             const notificationBadge = document.getElementById('notification-badge');
             const notificationDropdown = document.getElementById('notification-dropdown');
             const notificationList = document.getElementById('notification-list');
+            
+            // Add cursor-pointer class to elements
+            if (notificationBell) {
+                notificationBell.classList.add('cursor-pointer');
+            }
 
             if (notificationBell && notificationBadge && notificationDropdown) {
-                // Toggle dropdown when clicking the bell
-                notificationBell.addEventListener('click', function() {
-                    notificationDropdown.style.display = notificationDropdown.style.display === 'block' ? 'none' : 'block';
-
-                    // Fetch notifications when opening dropdown
+                // Add click event to notification bell
+                notificationBell.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent event bubbling
+                    
+                    // Handle dropdown visibility
                     if (notificationDropdown.style.display === 'block') {
+                        notificationDropdown.style.display = 'none';
+                    } else {
+                        notificationDropdown.style.display = 'block';
+                        
+                        // Ensure proper positioning
+                        const bellRect = notificationBell.getBoundingClientRect();
+                        notificationDropdown.style.position = 'absolute';
+                        notificationDropdown.style.top = (bellRect.height + 5) + 'px';
+                        notificationDropdown.style.right = '0';
+                        
+                        // Fetch notifications when opening dropdown
                         fetchNotifications();
                     }
                 });
+                
+                // Nettoyer et mettre à jour la liste des notifications
+                function clearNotificationList() {
+                    notificationList.innerHTML = '';
+                }
 
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    if (notificationDropdown.style.display === 'block' && 
+                        !notificationBell.contains(e.target) && 
+                        !notificationDropdown.contains(e.target)) {
                         notificationDropdown.style.display = 'none';
                     }
                 });
 
                 // Function to fetch unread count
                 function fetchUnreadCount() {
-                    // This would normally be an Ajax call to your backend
-                    fetch('/api/notifications/unread-count')
+                    // Get unread count from the correct endpoint
+                    fetch('/admin/notifications/unread-count')
                         .then(response => response.json())
                         .catch(() => ({ count: 0 }))
                         .then(data => {
@@ -545,15 +588,141 @@
 
                 // Function to fetch notifications
                 function fetchNotifications() {
-                    // This would normally be an Ajax call to your backend
-                    // For now, just show a placeholder message
+                    // Show loading state
                     notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Chargement...</li>';
-
-                    // Simulate loading delay
-                    setTimeout(() => {
-                        notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Aucune notification récente</li>';
-                    }, 500);
+                    
+                    // Fetch notifications
+                    fetch('/admin/notifications/latest')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Vider la liste de notifications
+                            notificationList.innerHTML = '';
+                            
+                            if (data.notifications && data.notifications.length > 0) {
+                                // Solution ultra-simple: utiliser innerHTML avec éléments HTML directs
+                                data.notifications.forEach(function(notification) {
+                                    // Définir les variables
+                                    const bgColor = notification.is_read ? '#ffffff' : '#f0f0f0';
+                                    const date = new Date(notification.created_at).toLocaleString('fr-FR');
+                                    let complaintId = 0;
+                                    
+                                    // Essayer d'extraire l'ID de la notification
+                                    try {
+                                        if (notification.related_id && !isNaN(parseInt(notification.related_id))) {
+                                            complaintId = parseInt(notification.related_id);
+                                        } else if (notification.message) {
+                                            // Essayer d'extraire l'ID du message s'il est au format "Réclamation #123"
+                                            const matches = notification.message.match(/#(\d+)/);
+                                            if (matches && matches[1]) {
+                                                complaintId = parseInt(matches[1]);
+                                            }
+                                        }
+                                    } catch(e) {
+                                        console.error('Erreur lors de l\'extraction de l\'ID:', e);
+                                    }
+                                    
+                                    // Ajouter la notification comme un élément de liste avec boutons
+                                    const listItem = document.createElement('li');
+                                    listItem.className = 'list-group-item';
+                                    listItem.style.backgroundColor = bgColor;
+                                    listItem.style.position = 'relative';
+                                    listItem.style.padding = '10px 30px 10px 15px';
+                                    
+                                    listItem.innerHTML = `
+                                        <div>
+                                            <p class="mb-1">${notification.message}</p>
+                                            <small class="text-muted">${date}</small>
+                                        </div>
+                                        <div class="mt-2">
+                                            ${complaintId ? `<a href="/admin/complaints/${complaintId}" class="btn btn-sm btn-primary">Voir la réclamation</a>` : ''}
+                                        </div>
+                                        <button class="btn-close position-absolute" style="top:10px;right:10px;" onclick="deleteNotification(${notification.id})"></button>
+                                    `;
+                                    
+                                    notificationList.appendChild(listItem);
+                                });
+                            } else {
+                                notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Aucune notification récente</li>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching notifications:', error);
+                            notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Erreur lors du chargement des notifications</li>';
+                        });
                 }
+
+                // Function to mark notification as read
+                window.markNotificationAsRead = function(id, updateUI = true) {
+                    return fetch('/admin/notifications/mark-read', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ id: id })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && updateUI) {
+                            fetchNotifications();
+                            fetchUnreadCount();
+                        }
+                        return data;
+                    });
+                };
+
+                // Function to delete notification
+                window.deleteNotification = function(id) {
+                    fetch('/admin/notifications/delete', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({ id: id })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            fetchNotifications();
+                            fetchUnreadCount();
+                        }
+                    });
+                };
+
+                // Mark all notifications as read
+                document.getElementById('mark-all-read').addEventListener('click', function() {
+                    fetch('/admin/notifications/mark-all-read', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            fetchNotifications();
+                            fetchUnreadCount();
+                        }
+                    });
+                });
+
+                // Delete all notifications
+                document.getElementById('delete-all').addEventListener('click', function() {
+                    fetch('/admin/notifications/delete-all', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            fetchNotifications();
+                            fetchUnreadCount();
+                        }
+                    });
+                });
 
                 // Initial unread count fetch
                 fetchUnreadCount();
@@ -563,6 +732,6 @@
             }
         });
     </script>
-    @yield('scripts')
+    @stack('scripts')
 </body>
 </html>
