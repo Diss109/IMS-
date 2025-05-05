@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Login - Tuniship</title>
+        <title>Connexion - Tuniship</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="antialiased">
@@ -28,7 +28,7 @@
 
                     <!-- Password -->
                     <div class="mt-4">
-                        <label for="password" class="block font-medium text-sm text-gray-700">Password</label>
+                        <label for="password" class="block font-medium text-sm text-gray-700">Mot de passe</label>
                         <input id="password" type="password" name="password" required autocomplete="current-password" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                         @error('password')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -39,28 +39,28 @@
                     <div class="block mt-4">
                         <label for="remember_me" class="inline-flex items-center">
                             <input id="remember_me" type="checkbox" name="remember" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                            <span class="ml-2 text-sm text-gray-600">Se souvenir de moi</span>
                         </label>
                     </div>
 
                     <div class="flex items-center justify-end mt-4">
                         @if (Route::has('password.request'))
                             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                                Forgot your password?
+                                Mot de passe oublié ?
                             </a>
                         @endif
 
                         <button type="submit" class="ml-4 inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                            Log in
+                            Connexion
                         </button>
                     </div>
                 </form>
 
                 <div class="mt-6 text-center">
                     <p class="text-sm text-gray-600">
-                        Don't have an account?
+                        Vous n'avez pas de compte ?
                         <a href="{{ route('register') }}" class="font-medium text-indigo-600 hover:text-indigo-500">
-                            Register now
+                            Inscrivez-vous maintenant
                         </a>
                     </p>
                 </div>

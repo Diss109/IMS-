@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Register</title>
+        <title>Inscription</title>
         <!-- Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <style>
@@ -62,15 +62,15 @@
                             <div class="logo-container">
                                 <img src="/images/logo.jpg" alt="Tuniship Logo" class="img-fluid">
                             </div>
-                            <h4 class="welcome-text">Create Account</h4>
+                            <h4 class="welcome-text">Créer un compte</h4>
                         </div>
                         <div class="card-body p-4">
-                            <form method="POST" action="{{ route('register') }}">
+                            <form method="POST" action="{{ route('register') }}" novalidate>
                                 @csrf
 
                                 <div class="form-floating mb-3">
-                                    <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required autofocus>
-                                    <label for="name">Full Name</label>
+                                    <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required autofocus oninvalid="this.setCustomValidity('Veuillez entrer votre nom complet')" oninput="this.setCustomValidity('')" title="Veuillez entrer votre nom complet">
+                                    <label for="name">Nom complet</label>
                                     @error('name')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
@@ -79,8 +79,8 @@
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required>
-                                    <label for="email">Email address</label>
+                                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required oninvalid="this.setCustomValidity('Veuillez inclure un @ dans l\'adresse email')" oninput="this.setCustomValidity('')" title="Veuillez entrer une adresse email valide">
+                                    <label for="email">Adresse email</label>
                                     @error('email')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
@@ -89,8 +89,8 @@
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required>
-                                    <label for="password">Password</label>
+                                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required minlength="8" oninvalid="this.setCustomValidity('Le mot de passe doit contenir au moins 8 caractères')" oninput="this.setCustomValidity('')" title="Le mot de passe doit contenir au moins 8 caractères">
+                                    <label for="password">Mot de passe</label>
                                     @error('password')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
@@ -99,13 +99,13 @@
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
-                                    <label for="password_confirmation">Confirm Password</label>
+                                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required minlength="8" oninvalid="this.setCustomValidity('Veuillez confirmer votre mot de passe')" oninput="this.setCustomValidity('')" title="Veuillez confirmer votre mot de passe">
+                                    <label for="password_confirmation">Confirmer le mot de passe</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <select class="form-control @error('role') is-invalid @enderror" id="role" name="role" required>
-                                        <option value="">Select Role</option>
+                                    <select class="form-control @error('role') is-invalid @enderror" id="role" name="role" required oninvalid="this.setCustomValidity('Veuillez sélectionner un rôle')" oninput="this.setCustomValidity('')" title="Veuillez sélectionner un rôle">
+                                        <option value="">Sélectionner un rôle</option>
                                         @foreach($roles as $value => $label)
     @if(strtolower($value) !== 'admin' && strtolower($value) !== 'administrateur')
         <option value="{{ $value }}" {{ old('role') == $value ? 'selected' : '' }}>
@@ -114,7 +114,7 @@
     @endif
 @endforeach
                                     </select>
-                                    <label for="role">Role</label>
+                                    <label for="role">Rôle</label>
                                     @error('role')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
@@ -124,7 +124,7 @@
 
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-primary">
-                                        Register
+                                        S'inscrire
                                     </button>
                                 </div>
                             </form>
@@ -136,5 +136,48 @@
 
         <!-- Bootstrap Bundle with Popper -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Traduction des messages d'erreur de validation HTML5
+            document.addEventListener('DOMContentLoaded', function() {
+                // Version française des messages de validation
+                const messages = {
+                    valueMissing: {
+                        email: 'Veuillez entrer une adresse email',
+                        password: 'Veuillez entrer un mot de passe',
+                        text: 'Veuillez remplir ce champ',
+                        select: 'Veuillez sélectionner une option'
+                    },
+                    typeMismatch: {
+                        email: 'Veuillez inclure un "@" dans l\'adresse email'
+                    },
+                    tooShort: {
+                        password: 'Le mot de passe doit contenir au moins {minLength} caractères'
+                    }
+                };
+
+                // Surcharge de la méthode checkValidity pour personnaliser les messages
+                const inputs = document.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    input.addEventListener('invalid', function(e) {
+                        if (e.target.validity.valueMissing) {
+                            const type = e.target.type;
+                            e.target.setCustomValidity(
+                                messages.valueMissing[type] || messages.valueMissing.text
+                            );
+                        } else if (e.target.validity.typeMismatch && e.target.type === 'email') {
+                            e.target.setCustomValidity(messages.typeMismatch.email);
+                        } else if (e.target.validity.tooShort && e.target.type === 'password') {
+                            e.target.setCustomValidity(
+                                messages.tooShort.password.replace('{minLength}', e.target.minLength)
+                            );
+                        }
+                    });
+
+                    input.addEventListener('input', function(e) {
+                        e.target.setCustomValidity('');
+                    });
+                });
+            });
+        </script>
     </body>
 </html>

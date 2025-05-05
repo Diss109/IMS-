@@ -17,4 +17,7 @@ return [
     'throttled' => 'Veuillez attendre avant de réessayer.',
     'token' => 'Ce jeton de réinitialisation du mot de passe n\'est pas valide.',
     'user' => "Aucun utilisateur n'a été trouvé avec cette adresse email.",
+    'reset_password_message' => 'Mot de passe oublié ? Pas de problème. Indiquez-nous simplement votre adresse e-mail et nous vous enverrons un lien de réinitialisation qui vous permettra d\'en choisir un nouveau.',
+    'reset_button' => 'Réinitialiser le mot de passe',
+    'reset_link_button' => 'Envoyer le lien de réinitialisation',
 ];

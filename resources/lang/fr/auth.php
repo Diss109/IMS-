@@ -27,4 +27,12 @@ return [
     'already_registered' => 'Déjà inscrit ?',
     'create_account' => 'Créer un compte',
     'welcome' => 'Bienvenue !',
+    'reset_password' => 'Réinitialiser le mot de passe',
+    'send_reset_link' => 'Envoyer le lien de réinitialisation',
+    'verify_email' => 'Vérification d\'email',
+    'verify_email_sent' => 'Un nouveau lien de vérification a été envoyé à votre adresse e-mail.',
+    'resend_verification_email' => 'Renvoyer l\'e-mail de vérification',
+    'confirm' => 'Confirmer',
+    'secure_area' => 'Ceci est une zone sécurisée de l\'application. Veuillez confirmer votre mot de passe avant de continuer.',
+    'create_account_button' => 'S\'inscrire',
 ];
