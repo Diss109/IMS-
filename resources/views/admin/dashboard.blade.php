@@ -5,6 +5,64 @@
 @section('content')
 
     <div class="container-fluid">
+        <!-- Date Filter Bar -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Filtres de date</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Period Filters -->
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Période prédéfinie:</strong></label>
+                            <div class="d-flex flex-wrap" style="gap: 10px;">
+                                <a href="{{ route('admin.dashboard', ['period' => 'week']) }}" 
+                                   class="btn btn-outline-primary">
+                                   <i class="fas fa-calendar-week"></i> Cette semaine
+                                </a>
+                                <a href="{{ route('admin.dashboard', ['period' => 'month']) }}" 
+                                   class="btn btn-outline-primary">
+                                   <i class="fas fa-calendar-alt"></i> Ce mois
+                                </a>
+                                <a href="{{ route('admin.dashboard', ['period' => 'total']) }}" 
+                                   class="btn btn-outline-primary">
+                                   <i class="fas fa-infinity"></i> Tout
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Custom Date Range -->
+                        <form action="{{ route('admin.dashboard') }}" method="GET">
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Période personnalisée:</strong></label>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label for="start_date">Date de début</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request('start_date') }}">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label for="end_date">Date de fin</label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request('end_date') }}">
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end mb-2">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-filter"></i> Appliquer
+                                        </button>
+                                        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary ms-2">
+                                            <i class="fas fa-undo"></i> Réinitialiser
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Statistics Cards -->
         <div class="row">
             <div class="col-xl-3 col-md-6 mb-4">
@@ -178,6 +236,78 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Date filter functionality
+    const dateFilterForm = document.getElementById('dateFilterForm');
+    const periodInput = document.getElementById('periodInput');
+    const periodButtons = document.querySelectorAll('[data-period]');
+    const customDateToggle = document.getElementById('customDateToggle');
+    const customDateInputs = document.querySelectorAll('.custom-date-inputs');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    // Set default dates if not already set
+    if (!startDateInput.value) {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        startDateInput.value = oneWeekAgo.toISOString().split('T')[0];
+    }
+    
+    if (!endDateInput.value) {
+        const today = new Date();
+        endDateInput.value = today.toISOString().split('T')[0];
+    }
+    
+    // Check if custom date is being used based on URL parameters
+    if (new URLSearchParams(window.location.search).has('start_date')) {
+        customDateToggle.checked = true;
+        customDateInputs.forEach(el => el.style.display = 'block');
+        // Clear the period when custom dates are active
+        periodInput.value = '';
+        // Update button states
+        periodButtons.forEach(btn => btn.classList.remove('btn-primary'));
+        periodButtons.forEach(btn => btn.classList.add('btn-outline-primary'));
+    }
+    
+    // Period button click handlers
+    periodButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const period = this.getAttribute('data-period');
+            periodInput.value = period;
+            
+            // Update button states
+            periodButtons.forEach(btn => btn.classList.remove('btn-primary'));
+            periodButtons.forEach(btn => btn.classList.add('btn-outline-primary'));
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+            
+            // When a period button is clicked, disable custom date range
+            customDateToggle.checked = false;
+            customDateInputs.forEach(el => el.style.display = 'none');
+            
+            // Submit the form automatically
+            dateFilterForm.submit();
+        });
+    });
+    
+    // Custom date toggle handler
+    customDateToggle.addEventListener('change', function() {
+        if (this.checked) {
+            customDateInputs.forEach(el => el.style.display = 'block');
+            // Clear the period when custom dates are active
+            periodInput.value = '';
+            // Update button states
+            periodButtons.forEach(btn => btn.classList.remove('btn-primary'));
+            periodButtons.forEach(btn => btn.classList.add('btn-outline-primary'));
+        } else {
+            customDateInputs.forEach(el => el.style.display = 'none');
+            // Set default period
+            periodInput.value = 'total';
+            // Update button states
+            periodButtons.forEach(btn => btn.classList.remove('btn-primary'));
+            document.querySelector('[data-period="total"]').classList.add('btn-primary');
+        }
+    });
+    
     // Debug logging
     console.log('Chart data:', @json($chartData));
     console.log('Types distribution:', @json($typeDistribution));

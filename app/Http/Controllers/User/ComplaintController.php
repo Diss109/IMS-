@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Complaint;
+use App\Models\Notification;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ComplaintController extends Controller
 {
@@ -40,9 +43,27 @@ class ComplaintController extends Controller
         $request->validate([
             'status' => 'required|string',
         ]);
+        
+        // Utiliser directement les valeurs en français telles quelles
+        $status = $request->input('status');
+        
+        // Valider que le statut est parmi les options permises
+        $allowedStatuses = ['en_attente', 'en_cours', 'résolu', 'non_résolu'];
+        if (!in_array($status, $allowedStatuses)) {
+            return redirect()->back()->with('error', 'Statut invalide');
+        }
+        
+        // Get the complaint
         $complaint = Complaint::where('assigned_to', Auth::id())->findOrFail($id);
-        $complaint->status = $request->status;
-        $complaint->save();
+        
+        // Direct SQL update pour éviter tout problème avec Eloquent et les valeurs ENUM
+        DB::update(
+            'UPDATE complaints SET status = ?, updated_at = ? WHERE id = ?', 
+            [$status, now(), $complaint->id]
+        );
+        
+        // Reload the complaint
+        $complaint = Complaint::findOrFail($id);
         // Notify all admins about the status change
         $admins = \App\Models\User::where('role', \App\Models\User::ROLE_ADMIN)->get();
         foreach ($admins as $admin) {

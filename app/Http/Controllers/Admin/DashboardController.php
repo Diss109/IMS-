@@ -33,10 +33,25 @@ class DashboardController extends BaseAdminController
         $urgency = $request->get('urgency');
         $status = $request->get('status');
         $date = $request->get('date');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
 
         $query = Complaint::query();
 
-        // Apply filters
+        // Apply date filters (custom date range takes precedence over period)
+        if ($startDate && $endDate) {
+            // Convert end date to include the entire day
+            $endDateWithTime = Carbon::parse($endDate)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDateWithTime]);
+            // Clear period when custom date range is used
+            $period = 'custom';
+        } else {
+            // Apply default period filter if no custom date range
+            $periodStartDate = $this->getStartDate($period);
+            $query->where('created_at', '>=', $periodStartDate);
+        }
+
+        // Apply other filters
         if ($type) {
             $query->where('complaint_type', $type);
         }
@@ -108,17 +123,21 @@ class DashboardController extends BaseAdminController
 
     private function getChartData($period, $query)
     {
-        $startDate = $this->getStartDate($period);
+        // Determine grouping level based on period
+        // For custom date ranges, determine the grouping based on range length
         $groupBy = match ($period) {
             'week' => 'date',
             'month' => 'date',
             'year' => 'month',
             'total' => 'month',
+            'custom' => $this->determineGroupByForCustomRange($query),
             default => 'date',
         };
+        
+        // No need to apply date filtering again as it's already applied to $query in index method
 
         if ($groupBy === 'month') {
-            $complaints = $query->where('created_at', '>=', $startDate)
+            $complaints = $query->clone()
                 ->selectRaw('YEAR(created_at) as year')
                 ->selectRaw('MONTH(created_at) as month')
                 ->selectRaw('status')
@@ -136,7 +155,7 @@ class DashboardController extends BaseAdminController
                 return Carbon::createFromFormat('Y-m', $date)->format('F Y');
             });
         } else {
-            $complaints = $query->where('created_at', '>=', $startDate)
+            $complaints = $query->clone()
                 ->selectRaw('DATE(created_at) as date')
                 ->selectRaw('status')
                 ->selectRaw('COUNT(*) as count')
@@ -193,9 +212,36 @@ class DashboardController extends BaseAdminController
         });
     }
 
+    /**
+     * Determine appropriate grouping level for custom date ranges
+     * based on the date range size
+     */
+    private function determineGroupByForCustomRange($query)
+    {
+        // Get the min and max dates from the query to calculate range
+        $dateRange = $query->clone()->selectRaw('MIN(created_at) as min_date, MAX(created_at) as max_date')->first();
+        
+        if (!$dateRange->min_date || !$dateRange->max_date) {
+            return 'date'; // Default to daily if no data
+        }
+        
+        $minDate = Carbon::parse($dateRange->min_date);
+        $maxDate = Carbon::parse($dateRange->max_date);
+        $diffInDays = $maxDate->diffInDays($minDate);
+        
+        // Use appropriate grouping based on range size
+        if ($diffInDays <= 31) {
+            return 'date'; // Daily for ranges up to a month
+        } else if ($diffInDays <= 365) {
+            return 'month'; // Monthly for ranges up to a year
+        } else {
+            return 'month'; // Monthly for everything over a year
+        }
+    }
+
     private function getComplaintTypesDistribution($query)
     {
-        $types = $query->selectRaw('complaint_type, COUNT(*) as count')
+        $types = $query->clone()->selectRaw('complaint_type, COUNT(*) as count')
             ->groupBy('complaint_type')
             ->get();
 

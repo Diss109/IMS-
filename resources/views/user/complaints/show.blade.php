@@ -76,6 +76,24 @@
             <div class="alert alert-info mt-4">
                 <strong>Avez-vous résolu cette réclamation ?</strong> Merci de mettre à jour le statut si c'est le cas.
             </div>
+
+            <!-- Status Update Form -->
+            <form action="{{ route('user.complaints.updateStatus', $complaint->id) }}" method="POST" class="mb-4">
+                @csrf
+                @method('PUT')
+                <div class="form-group mb-3">
+                    <label for="status"><strong>Mettre à jour le statut :</strong></label>
+                    <select class="form-control" id="status" name="status">
+                        <option value="pending" {{ $complaint->status == 'pending' ? 'selected' : '' }}>En attente</option>
+                        <option value="under_review" {{ $complaint->status == 'under_review' ? 'selected' : '' }}>En revue</option>
+                        <option value="in_progress" {{ $complaint->status == 'in_progress' ? 'selected' : '' }}>En cours</option>
+                        <option value="resolved" {{ $complaint->status == 'resolved' ? 'selected' : '' }}>Résolu</option>
+                        <option value="closed" {{ $complaint->status == 'closed' ? 'selected' : '' }}>Fermé</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Mettre à jour le statut</button>
+            </form>
+            
             <a href="{{ route('user.complaints.index') }}" class="btn btn-secondary">Retour</a>
         </div>
     </div>
