@@ -2,7 +2,6 @@
 @section('page_title', 'Mes Réclamations')
 @section('content')
 <div class="container-fluid">
-    <h2 class="mb-4">Mes Réclamations</h2>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif

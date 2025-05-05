@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('page_title', 'Modifier l\'utilisateur')
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -7,17 +9,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex align-items-center justify-content-between mb-4">
-@section('page_title', 'Modifier l\'utilisateur')
-
-
-                            <span style="position:relative;display:inline-block;margin:0 10px;">
-
-                                <span id="notification-badge" style="position:absolute;top:-7px;right:-7px;background:#dc3545;color:#fff;border-radius:50%;padding:2px 7px;font-size:12px;min-width:18px;text-align:center;{{ (($unreadNotificationsCount ?? 0) > 0) ? '' : 'display:none;' }}">
-    {{ $unreadNotificationsCount ?? 0 }}
-</span>
-                            </span>
-
-                        </div>
+                        <h5 class="m-0">Informations de l'utilisateur</h5>
                     </div>
                 </div>
                 <div class="card-body">

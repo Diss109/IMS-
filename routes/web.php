@@ -29,9 +29,9 @@ Route::get('/', function () {
 Route::get('/complaints/create', [ComplaintController::class, 'createPublic'])->name('complaints.create.public');
 Route::post('/complaints', [ComplaintController::class, 'storePublic'])->name('complaints.store.public');
 
-// Chatbot réclamation (public, no login)
-Route::get('/reclamation-chatbot', [ComplaintController::class, 'chatbotForm'])->name('reclamation.chatbot');
-Route::post('/reclamation-chatbot', [ComplaintController::class, 'chatbotStore'])->name('reclamation.chatbot.store');
+// Assistant de réclamation (public, no login)
+Route::get('/reclamation-assistant', [ComplaintController::class, 'assistantForm'])->name('reclamation.assistant');
+Route::post('/reclamation-assistant', [ComplaintController::class, 'assistantStore'])->name('reclamation.assistant.store');
 
 // Test route for debugging
 Route::get('/test-complaint-insert', function() {
@@ -48,7 +48,7 @@ Route::get('/test-complaint-insert', function() {
             'created_at' => now(),
             'updated_at' => now()
         ]);
-        
+
         return 'Test complaint created with ID: ' . $id;
     } catch (\Exception $e) {
         return 'Error: ' . $e->getMessage();
@@ -82,7 +82,7 @@ Route::middleware(['web'])->group(function () {
         Route::get('/user/notifications', [App\Http\Controllers\User\NotificationController::class, 'index'])->name('user.notifications.index');
         Route::delete('/user/notifications/{id}', [App\Http\Controllers\User\NotificationController::class, 'destroy'])->name('user.notifications.destroy');
         Route::post('/user/notifications/mark-all-read', [App\Http\Controllers\User\NotificationController::class, 'markAllRead'])->name('user.notifications.markAllRead');
-        
+
         // User notification AJAX endpoints
         Route::get('/user/notifications/latest', [App\Http\Controllers\User\NotificationController::class, 'getLatest'])->name('user.notifications.latest');
         Route::get('/user/notifications/unread-count', [App\Http\Controllers\User\NotificationController::class, 'getUnreadCount'])->name('user.notifications.unreadCount');

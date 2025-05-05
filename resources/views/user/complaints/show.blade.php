@@ -4,7 +4,7 @@
 <div class="container mt-4">
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Détail de la Réclamation</h3>
+            <h5 class="mb-0">Informations</h5>
         </div>
         <div class="card-body">
             <div class="mb-3">
@@ -12,7 +12,7 @@
                 <strong>Entreprise :</strong> {{ $complaint->company_name ?? '-' }}<br>
                 <strong>Client :</strong> {{ $complaint->first_name ?? '' }} {{ $complaint->last_name ?? '' }}<br>
                 <strong>Email :</strong> <a href="mailto:{{ $complaint->email }}">{{ $complaint->email }}</a><br>
-                <strong>Type de réclamation :</strong> 
+                <strong>Type de réclamation :</strong>
                 @switch($complaint->complaint_type)
                     @case('retard_livraison')
                         Retard de livraison

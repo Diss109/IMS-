@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Tableau de bord KPI</h1>
+        <div><!-- Empty div to maintain flex structure --></div>
         <button id="print-btn" class="btn btn-primary">
             <i class="fas fa-print me-2"></i>Imprimer
         </button>
@@ -172,13 +172,13 @@
     .sidebar, .navbar, footer, .card-header {
         display: none !important;
     }
-    
+
     .card {
         break-inside: avoid;
         border: 1px solid #ddd !important;
         margin-bottom: 20px !important;
     }
-    
+
     .container-fluid {
         width: 100% !important;
         padding: 0 !important;
