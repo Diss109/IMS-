@@ -105,4 +105,28 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new \App\Notifications\CustomResetPassword($token));
     }
+
+    /**
+     * Get messages sent by this user
+     */
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    /**
+     * Get messages received by this user
+     */
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+    /**
+     * Get the number of unread messages
+     */
+    public function unreadMessagesCount()
+    {
+        return $this->receivedMessages()->where('is_read', false)->count();
+    }
 }

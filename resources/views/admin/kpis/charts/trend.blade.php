@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Tendance des réclamations</title>
+    <title>Taux de réclamations</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
         google.charts.load('current', {'packages':['corechart']});
@@ -17,7 +17,7 @@
             ]);
 
             var options = {
-                title: 'Tendance des réclamations',
+                title: 'Taux de réclamations',
                 curveType: 'function',
                 legend: { position: 'bottom' },
                 colors: ['#4e73df'],

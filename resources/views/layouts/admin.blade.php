@@ -7,6 +7,19 @@
     <title>Administration - IMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <!-- Add jQuery if not already included -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Set up AJAX defaults for all jQuery AJAX requests
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+        });
+    </script>
     <style>
         :root {
             --primary-color: #4361ee;
@@ -358,17 +371,17 @@
             color: white;
             box-shadow: 0 0 0 2px white;
         }
-        
+
         /* Cursor pointer for interactive elements */
         .cursor-pointer {
             cursor: pointer !important;
         }
-        
+
         /* Make notification bell stand out more */
         #notification-bell i {
             transition: color 0.2s ease;
         }
-        
+
         #notification-bell:hover i {
             color: var(--primary-color) !important;
         }
@@ -426,6 +439,11 @@
                 <a href="{{ route('user.complaints.index') }}" class="nav-link {{ request()->routeIs('user.complaints.*') ? 'active' : '' }}">
                     <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
                     <span class="sidebar-link-text">Mes réclamations</span>
+                </a>
+                <a href="{{ route('user.messages.index') }}" class="nav-link {{ request()->routeIs('user.messages.*') ? 'active' : '' }}">
+                    <i class="fas fa-comments sidebar-menu-logo"></i>
+                    <span class="sidebar-link-text">Messages</span>
+                    <span id="unread-messages-count" class="badge bg-danger rounded-pill ms-2" style="display: none;">0</span>
                 </a>
             @endif
             <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -523,12 +541,36 @@
                 });
             }, 5000);
 
+            // Unread messages counter (only for regular users)
+            @if(Auth::check() && Auth::user()->role !== \App\Models\User::ROLE_ADMIN)
+            function fetchUnreadMessagesCount() {
+                fetch('{{ route("user.messages.unreadCount") }}')
+                    .then(response => response.json())
+                    .catch(() => ({ count: 0 }))
+                    .then(data => {
+                        const unreadMessagesCount = document.getElementById('unread-messages-count');
+                        if (unreadMessagesCount) {
+                            if (data.count > 0) {
+                                unreadMessagesCount.textContent = data.count;
+                                unreadMessagesCount.style.display = 'inline';
+                            } else {
+                                unreadMessagesCount.style.display = 'none';
+                            }
+                        }
+                    });
+            }
+
+            // Check for unread messages every 30 seconds
+            fetchUnreadMessagesCount();
+            setInterval(fetchUnreadMessagesCount, 30000);
+            @endif
+
             // Notification system
             const notificationBell = document.getElementById('notification-bell');
             const notificationBadge = document.getElementById('notification-badge');
             const notificationDropdown = document.getElementById('notification-dropdown');
             const notificationList = document.getElementById('notification-list');
-            
+
             // Add cursor-pointer class to elements
             if (notificationBell) {
                 notificationBell.classList.add('cursor-pointer');
@@ -538,24 +580,24 @@
                 // Add click event to notification bell
                 notificationBell.addEventListener('click', function(e) {
                     e.stopPropagation(); // Prevent event bubbling
-                    
+
                     // Handle dropdown visibility
                     if (notificationDropdown.style.display === 'block') {
                         notificationDropdown.style.display = 'none';
                     } else {
                         notificationDropdown.style.display = 'block';
-                        
+
                         // Ensure proper positioning
                         const bellRect = notificationBell.getBoundingClientRect();
                         notificationDropdown.style.position = 'absolute';
                         notificationDropdown.style.top = (bellRect.height + 5) + 'px';
                         notificationDropdown.style.right = '0';
-                        
+
                         // Fetch notifications when opening dropdown
                         fetchNotifications();
                     }
                 });
-                
+
                 // Nettoyer et mettre à jour la liste des notifications
                 function clearNotificationList() {
                     notificationList.innerHTML = '';
@@ -563,8 +605,8 @@
 
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (notificationDropdown.style.display === 'block' && 
-                        !notificationBell.contains(e.target) && 
+                    if (notificationDropdown.style.display === 'block' &&
+                        !notificationBell.contains(e.target) &&
                         !notificationDropdown.contains(e.target)) {
                         notificationDropdown.style.display = 'none';
                     }
@@ -590,14 +632,14 @@
                 function fetchNotifications() {
                     // Show loading state
                     notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Chargement...</li>';
-                    
+
                     // Fetch notifications
                     fetch('/admin/notifications/latest')
                         .then(response => response.json())
                         .then(data => {
                             // Vider la liste de notifications
                             notificationList.innerHTML = '';
-                            
+
                             if (data.notifications && data.notifications.length > 0) {
                                 // Solution ultra-simple: utiliser innerHTML avec éléments HTML directs
                                 data.notifications.forEach(function(notification) {
@@ -605,7 +647,7 @@
                                     const bgColor = notification.is_read ? '#ffffff' : '#f0f0f0';
                                     const date = new Date(notification.created_at).toLocaleString('fr-FR');
                                     let complaintId = 0;
-                                    
+
                                     // Essayer d'extraire l'ID de la notification
                                     try {
                                         if (notification.related_id && !isNaN(parseInt(notification.related_id))) {
@@ -620,14 +662,14 @@
                                     } catch(e) {
                                         console.error('Erreur lors de l\'extraction de l\'ID:', e);
                                     }
-                                    
+
                                     // Ajouter la notification comme un élément de liste avec boutons
                                     const listItem = document.createElement('li');
                                     listItem.className = 'list-group-item';
                                     listItem.style.backgroundColor = bgColor;
                                     listItem.style.position = 'relative';
                                     listItem.style.padding = '10px 30px 10px 15px';
-                                    
+
                                     listItem.innerHTML = `
                                         <div>
                                             <p class="mb-1">${notification.message}</p>
@@ -638,7 +680,7 @@
                                         </div>
                                         <button class="btn-close position-absolute" style="top:10px;right:10px;" onclick="deleteNotification(${notification.id})"></button>
                                     `;
-                                    
+
                                     notificationList.appendChild(listItem);
                                 });
                             } else {

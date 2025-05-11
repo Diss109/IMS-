@@ -89,6 +89,15 @@ Route::middleware(['web'])->group(function () {
         Route::post('/user/notifications/mark-read', [App\Http\Controllers\User\NotificationController::class, 'markRead'])->name('user.notifications.markRead');
         Route::post('/user/notifications/delete', [App\Http\Controllers\User\NotificationController::class, 'ajaxDestroy'])->name('user.notifications.ajaxDestroy');
         Route::post('/user/notifications/delete-all', [App\Http\Controllers\User\NotificationController::class, 'destroyAll'])->name('user.notifications.destroyAll');
+
+        // Messages routes
+        Route::get('/user/messages', [App\Http\Controllers\User\MessageController::class, 'index'])->name('user.messages.index');
+        Route::get('/user/messages/unread-count', [App\Http\Controllers\User\MessageController::class, 'getUnreadCount'])->name('user.messages.unreadCount');
+        Route::put('/user/messages/{id}', [App\Http\Controllers\User\MessageController::class, 'updateMessage'])->name('user.messages.update');
+        Route::delete('/user/messages/{id}', [App\Http\Controllers\User\MessageController::class, 'deleteMessage'])->name('user.messages.delete');
+        Route::get('/user/messages/{user}', [App\Http\Controllers\User\MessageController::class, 'conversation'])->name('user.messages.conversation');
+        Route::post('/user/messages/{user}', [App\Http\Controllers\User\MessageController::class, 'sendMessage'])->name('user.messages.send');
+        Route::get('/user/messages/{user}/new', [App\Http\Controllers\User\MessageController::class, 'getNewMessages'])->name('user.messages.new');
     });
 
     // Admin routes - protected at the controller level
@@ -120,12 +129,12 @@ Route::middleware(['web'])->group(function () {
             if (!$user) {
                 return response()->json(['notifications' => []]);
             }
-            
+
             $notifications = Notification::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get(['id', 'message', 'type', 'is_read', 'created_at']);
-                
+
             return response()->json(['notifications' => $notifications]);
         });
 
@@ -134,11 +143,11 @@ Route::middleware(['web'])->group(function () {
             if (!$user) {
                 return response()->json(['count' => 0]);
             }
-            
+
             $count = Notification::where('user_id', $user->id)
                 ->where('is_read', false)
                 ->count();
-                
+
             return response()->json(['count' => $count]);
         });
 

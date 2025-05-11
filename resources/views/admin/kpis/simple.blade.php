@@ -104,7 +104,7 @@
         <div class="col-xl-8 col-lg-7">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Tendance des réclamations</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Taux de réclamations</h6>
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -180,26 +180,26 @@ Chart.defaults.global.defaultFontColor = '#858796';
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing charts');
-    
+
     // Prepare PHP data for charts
     @php
         // Monthly trend data
         $months = [];
         $complaintsData = [];
         $resolvedData = [];
-        
+
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subMonths($i);
             $months[] = $date->format('M');
-            
+
             $startOfMonth = $date->copy()->startOfMonth();
             $endOfMonth = $date->copy()->endOfMonth();
-            
+
             $complaintsData[] = \App\Models\Complaint::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
             $resolvedData[] = \App\Models\Complaint::where('status', 'résolu')
                 ->whereBetween('updated_at', [$startOfMonth, $endOfMonth])->count();
         }
-        
+
         // Type distribution
         $types = ['Retard livraison', 'Retard chargement', 'Marchandise endommagée', 'Mauvais comportement', 'Autre'];
         $typeData = [
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
             \App\Models\Complaint::where('complaint_type', 'mauvais_comportement')->count(),
             \App\Models\Complaint::where('complaint_type', 'autre')->count(),
         ];
-        
+
         // Status distribution
         $statusLabels = ['En attente', 'Résolu', 'Non résolu'];
         $statusData = [
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
             \App\Models\Complaint::where('status', 'résolu')->count(),
             \App\Models\Complaint::where('status', 'non_résolu')->count()
         ];
-        
+
         // Urgency distribution
         $urgencyLabels = ['Critique', 'Élevée', 'Moyenne', 'Faible'];
         $urgencyData = [
