@@ -422,6 +422,10 @@
                     <i class="fas fa-star sidebar-menu-logo"></i>
                     <span class="sidebar-link-text">Évaluations</span>
                 </a>
+                <a href="{{ route('admin.predictions.index') }}" class="nav-link {{ request()->routeIs('admin.predictions.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-bar sidebar-menu-logo"></i>
+                    <span class="sidebar-link-text">Prédictions</span>
+                </a>
                 <a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
                     <i class="fas fa-chart-line sidebar-menu-logo"></i>
                     <span class="sidebar-link-text">KPIs</span>

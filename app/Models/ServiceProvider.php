@@ -45,8 +45,35 @@ class ServiceProvider extends Model
         return $this->hasMany(Complaint::class);
     }
 
+    /**
+     * Get the evaluations for the service provider.
+     */
     public function evaluations()
     {
         return $this->hasMany(Evaluation::class);
+    }
+
+    /**
+     * Get the predictions for the service provider.
+     */
+    public function predictions()
+    {
+        return $this->hasMany(ProviderPrediction::class);
+    }
+
+    public function getLatestPrediction($period = 'next_month')
+    {
+        return $this->predictions()
+            ->where('prediction_period', $period)
+            ->latest('prediction_date')
+            ->first();
+    }
+
+    public function getPerformanceTrend($limit = 5)
+    {
+        return $this->evaluations()
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->pluck('total_score', 'created_at');
     }
 }

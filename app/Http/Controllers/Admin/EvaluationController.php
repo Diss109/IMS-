@@ -8,9 +8,23 @@ use Illuminate\Http\Request;
 
 class EvaluationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $serviceProviders = \App\Models\ServiceProvider::all();
+        $query = \App\Models\ServiceProvider::query();
+
+        // Handle search
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('service_type', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%");
+            });
+        }
+
+        $serviceProviders = $query->paginate(10);
         return view('admin.evaluations.index', compact('serviceProviders'));
     }
 
@@ -33,7 +47,7 @@ class EvaluationController extends Controller
             ],
             // Ajoute ici d'autres grilles pour d'autres types plus tard
         ];
-        $type = $serviceProvider->type ?? 'armateur';
+        $type = $serviceProvider->service_type ?? 'armateur';
         $weights = $evaluationGrids[$type] ?? $evaluationGrids['armateur'];
         return view('admin.evaluations.create', compact('serviceProvider', 'evaluationHistory', 'weights'));
     }

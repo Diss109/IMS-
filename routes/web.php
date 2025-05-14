@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Notification;
+use Illuminate\Support\Facades\DB;
+use App\Services\PredictionService;
 
 
 /*
@@ -55,6 +57,54 @@ Route::get('/test-complaint-insert', function() {
     }
 });
 
+// Test route for predictions
+Route::get('/test-predictions', function() {
+    try {
+        $service = new PredictionService();
+        $providers = \App\Models\ServiceProvider::has('evaluations', '>=', 2)
+            ->withCount('evaluations')
+            ->with('predictions')
+            ->take(5)
+            ->get();
+
+        $results = [];
+        foreach ($providers as $provider) {
+            $trend = $service->getTrendInfo($provider);
+            $latestPrediction = $provider->predictions()->latest('prediction_date')->first();
+
+            $results[] = [
+                'id' => $provider->id,
+                'name' => $provider->name,
+                'evaluations_count' => $provider->evaluations_count,
+                'trend' => $trend,
+                'prediction' => $latestPrediction ? [
+                    'score' => $latestPrediction->predicted_score,
+                    'confidence' => $latestPrediction->confidence_level,
+                    'factors' => $latestPrediction->factors
+                ] : null
+            ];
+        }
+
+        return response()->json([
+            'message' => 'Showing prediction data for first 5 providers with 2+ evaluations',
+            'results' => $results
+        ], 200, [], JSON_PRETTY_PRINT);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
+
+// Test route for debugging AJAX
+Route::post('/debug/ajax-test', [App\Http\Controllers\DebugController::class, 'testAjax'])->name('debug.ajaxTest');
+Route::get('/debug/ajax-test', [App\Http\Controllers\DebugController::class, 'testAjax'])->name('debug.ajaxTest.get');
+Route::get('/debug/ajax-view', function() {
+    return view('debug.ajax-test');
+})->name('debug.ajaxView');
+
 // Authentication Routes
 Route::middleware(['web'])->group(function () {
     // Unified dashboard route: redirects users based on role
@@ -93,11 +143,13 @@ Route::middleware(['web'])->group(function () {
         // Messages routes
         Route::get('/user/messages', [App\Http\Controllers\User\MessageController::class, 'index'])->name('user.messages.index');
         Route::get('/user/messages/unread-count', [App\Http\Controllers\User\MessageController::class, 'getUnreadCount'])->name('user.messages.unreadCount');
-        Route::put('/user/messages/{id}', [App\Http\Controllers\User\MessageController::class, 'updateMessage'])->name('user.messages.update');
-        Route::delete('/user/messages/{id}', [App\Http\Controllers\User\MessageController::class, 'deleteMessage'])->name('user.messages.delete');
+        Route::get('/user/messages/debug', [App\Http\Controllers\User\MessageController::class, 'debug'])->name('user.messages.debug');
+        Route::get('/user/messages/test-form/{user}', [App\Http\Controllers\User\MessageController::class, 'testForm'])->name('user.messages.test_form');
         Route::get('/user/messages/{user}', [App\Http\Controllers\User\MessageController::class, 'conversation'])->name('user.messages.conversation');
         Route::post('/user/messages/{user}', [App\Http\Controllers\User\MessageController::class, 'sendMessage'])->name('user.messages.send');
         Route::get('/user/messages/{user}/new', [App\Http\Controllers\User\MessageController::class, 'getNewMessages'])->name('user.messages.new');
+        Route::put('/user/messages/{id}', [App\Http\Controllers\User\MessageController::class, 'updateMessage'])->name('user.messages.update');
+        Route::delete('/user/messages/{id}', [App\Http\Controllers\User\MessageController::class, 'deleteMessage'])->name('user.messages.delete');
     });
 
     // Admin routes - protected at the controller level
@@ -118,6 +170,12 @@ Route::middleware(['web'])->group(function () {
         Route::resource('users', UserController::class);
         Route::get('evaluator-permissions', [\App\Http\Controllers\Admin\EvaluatorPermissionController::class, 'index'])->name('evaluator_permissions.index');
         Route::post('evaluator-permissions', [\App\Http\Controllers\Admin\EvaluatorPermissionController::class, 'store'])->name('evaluator_permissions.store');
+
+        // Predictions routes
+        Route::get('predictions', [\App\Http\Controllers\Admin\PredictionController::class, 'index'])->name('predictions.index');
+        Route::get('predictions/{id}', [\App\Http\Controllers\Admin\PredictionController::class, 'show'])->name('predictions.show');
+        Route::post('predictions/generate', [\App\Http\Controllers\Admin\PredictionController::class, 'generateAll'])->name('predictions.generate');
+        Route::post('predictions/{id}/generate', [\App\Http\Controllers\Admin\PredictionController::class, 'generateForProvider'])->name('predictions.generate.provider');
 
         // Notifications
         Route::post('/notifications/delete', [App\Http\Controllers\NotificationController::class, 'destroy'])->middleware(['auth']);

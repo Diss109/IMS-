@@ -195,4 +195,32 @@ class MessageController extends Controller
             'success' => true
         ]);
     }
+
+    /**
+     * Debug messages functionality
+     */
+    public function debug()
+    {
+        // Get all users except admin and current user
+        $users = User::where('id', '!=', Auth::id())
+            ->where('role', '!=', User::ROLE_ADMIN)
+            ->get();
+
+        // Get all messages for current user
+        $messages = Message::where('sender_id', Auth::id())
+            ->orWhere('receiver_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get();
+
+        return view('user.messages.debug', compact('users', 'messages'));
+    }
+
+    /**
+     * Show a test form for messaging a user
+     */
+    public function testForm(User $user)
+    {
+        return view('user.messages.test_form', compact('user'));
+    }
 }

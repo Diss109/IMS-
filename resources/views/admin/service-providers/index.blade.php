@@ -9,25 +9,28 @@
 
                 <span style="position:relative;display:inline-block;margin:0 10px;">
 
-                    
+
                 </span>
 
             </div>
         </div>
         <div class="mb-4 d-flex justify-content-between align-items-center">
-        <form method="GET" action="" class="d-flex gap-2 align-items-center mb-0">
+        <form method="GET" action="{{ route('admin.service-providers.index') }}" class="d-flex gap-2 align-items-center mb-0">
             <input type="text" name="search" class="form-control" placeholder="Rechercher par nom ou email..." value="{{ request('search') }}">
             <select name="category" class="form-select">
                 <option value="">Toutes les catégories</option>
                 <option value="armateur" {{ request('category') == 'armateur' ? 'selected' : '' }}>Armateur</option>
                 <option value="compagnie_aerienne" {{ request('category') == 'compagnie_aerienne' ? 'selected' : '' }}>Compagnie aérienne</option>
-                <option value="transporteur_routier_international" {{ request('category') == 'transporteur_routier_international' ? 'selected' : '' }}>Transporteur routier international</option>
+                <option value="transporteur_routier_int" {{ request('category') == 'transporteur_routier_int' ? 'selected' : '' }}>Transporteur routier international</option>
                 <option value="transporteur_terrestre_local" {{ request('category') == 'transporteur_terrestre_local' ? 'selected' : '' }}>Transporteur terrestre local</option>
                 <option value="agent" {{ request('category') == 'agent' ? 'selected' : '' }}>Agent</option>
                 <option value="magasin" {{ request('category') == 'magasin' ? 'selected' : '' }}>Magasin</option>
                 <option value="autre" {{ request('category') == 'autre' ? 'selected' : '' }}>Autre</option>
             </select>
             <button class="btn btn-primary" type="submit">Rechercher</button>
+            @if(request('search') || request('category'))
+                <a href="{{ route('admin.service-providers.index') }}" class="btn btn-secondary">Réinitialiser</a>
+            @endif
         </form>
         <a href="{{ route('admin.service-providers.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Ajouter un prestataire
@@ -92,8 +95,18 @@
                     </table>
                 </div>
 
-                <div class="mt-4">
-                    {{ $serviceProviders->links() }}
+                <div class="mt-4 d-flex justify-content-center gap-2">
+                    @if ($serviceProviders->onFirstPage())
+                        <button class="btn btn-secondary" disabled>Précédent</button>
+                    @else
+                        <a class="btn btn-primary" href="{{ $serviceProviders->previousPageUrl() }}">Précédent</a>
+                    @endif
+                    <span class="align-self-center">Page {{ $serviceProviders->currentPage() }} / {{ $serviceProviders->lastPage() }}</span>
+                    @if ($serviceProviders->hasMorePages())
+                        <a class="btn btn-primary" href="{{ $serviceProviders->nextPageUrl() }}">Suivant</a>
+                    @else
+                        <button class="btn btn-secondary" disabled>Suivant</button>
+                    @endif
                 </div>
             </div>
         </div>

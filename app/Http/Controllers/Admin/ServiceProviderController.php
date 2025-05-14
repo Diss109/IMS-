@@ -8,11 +8,28 @@ use Illuminate\Http\Request;
 
 class ServiceProviderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('admin.service-providers.index', [
-            'serviceProviders' => ServiceProvider::paginate(10)
-        ]);
+        $query = ServiceProvider::query();
+
+        // Handle search
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Handle category filter
+        if ($request->has('category') && !empty($request->category)) {
+            $query->where('service_type', $request->category);
+        }
+
+        $serviceProviders = $query->paginate(10)->withQueryString();
+
+        return view('admin.service-providers.index', compact('serviceProviders'));
     }
 
     public function create()
