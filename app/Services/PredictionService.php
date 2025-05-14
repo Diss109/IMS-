@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 class PredictionService
 {
     const VERSION = '1.1.0';
-    const MIN_EVALUATIONS = 2; // Minimum evaluations needed for prediction
+    const MIN_EVALUATIONS = 5; // Minimum evaluations needed for prediction
 
     /**
      * Generate predictions for all service providers

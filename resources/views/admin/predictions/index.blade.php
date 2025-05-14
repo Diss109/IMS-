@@ -138,9 +138,13 @@
                                             <div class="progress mt-1" style="height: 4px;">
                                                 <div class="progress-bar bg-info" role="progressbar" style="width: {{ $provider->predictions->first()->confidence_level * 100 }}%" aria-valuenow="{{ $provider->predictions->first()->confidence_level * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <small class="text-muted">Confiance: {{ round($provider->predictions->first()->confidence_level * 100) }}%</small>
+                                            <small class="text-muted">Précision: {{ round($provider->predictions->first()->confidence_level * 100) }}%</small>
                                         @else
-                                            -
+                                            @if($provider->evaluations_count < 5)
+                                                <small class="text-muted fst-italic">Nombre d'évaluations insuffisant</small>
+                                            @else
+                                                -
+                                            @endif
                                         @endif
                                     </td>
                                     <td>
@@ -154,7 +158,11 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.predictions.show', $provider->id) }}" class="btn btn-sm btn-info">Détails</a>
+                                        @if($provider->evaluations_count >= 5)
+                                            <a href="{{ route('admin.predictions.show', $provider->id) }}" class="btn btn-sm btn-info">Détails</a>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforeach

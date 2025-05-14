@@ -105,7 +105,7 @@
                         </div>
 
                         <div class="mb-2">
-                            <strong>Niveau de confiance:</strong>
+                            <strong>Niveau de précision:</strong>
                             <div class="progress mt-1" style="height: 5px;">
                                 <div class="progress-bar bg-info" role="progressbar" style="width: {{ $latestPrediction->confidence_level * 100 }}%" aria-valuenow="{{ $latestPrediction->confidence_level * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
@@ -134,10 +134,15 @@
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <div class="text-muted">Aucune prévision disponible</div>
-                            <a href="{{ route('admin.predictions.generate') }}" class="btn btn-primary mt-3">
-                                Générer une prévision
-                            </a>
+                            @if($provider->evaluations->count() < 5)
+                                <div class="text-muted">Nombre d'évaluations insuffisant</div>
+                                <div class="small text-muted mt-2">Un minimum de 5 évaluations est requis pour générer une prévision fiable.</div>
+                            @else
+                                <div class="text-muted">Aucune prévision disponible</div>
+                                <a href="{{ route('admin.predictions.generate') }}" class="btn btn-primary mt-3">
+                                    Générer une prévision
+                                </a>
+                            @endif
                         </div>
                     @endif
                 </div>

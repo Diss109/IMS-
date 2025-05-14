@@ -25,7 +25,7 @@ class PredictionController extends Controller
     public function index()
     {
         // Get providers with their latest predictions
-        $providers = ServiceProvider::has('evaluations', '>=', 2)
+        $providers = ServiceProvider::has('evaluations', '>=', 1)
             ->withCount('evaluations')
             ->with(['predictions' => function($query) {
                 $query->latest('prediction_date')->limit(1);
