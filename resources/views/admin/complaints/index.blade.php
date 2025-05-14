@@ -21,68 +21,68 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-bordered table-striped table-sm" style="font-size: 0.85rem;">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Entreprise</th>
-                            <th>Contact</th>
-                            <th>Type</th>
-                            <th>Urgence</th>
-                            <th>Statut</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th style="width: 5%">ID</th>
+                            <th style="width: 15%">Entreprise</th>
+                            <th style="width: 15%">Contact</th>
+                            <th style="width: 15%">Type</th>
+                            <th style="width: 10%">Urgence</th>
+                            <th style="width: 10%">Statut</th>
+                            <th style="width: 15%">Date</th>
+                            <th style="width: 15%">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($complaints as $complaint)
                             <tr>
-                                <td>#{{ $complaint->id }}</td>
-                                <td>{{ $complaint->company_name }}</td>
-                                <td>
+                                <td class="align-middle">#{{ $complaint->id }}</td>
+                                <td class="align-middle">{{ $complaint->company_name }}</td>
+                                <td class="align-middle">
                                     {{ $complaint->first_name }} {{ $complaint->last_name }}<br>
                                     <small class="text-muted">{{ $complaint->email }}</small>
                                 </td>
-                                <td>
+                                <td class="align-middle">
                                     @if($complaint->complaint_type === 'retard_livraison')
-                                        Retard de livraison
+                                        <span class="badge bg-info" style="font-size: 0.75rem;">Retard de livraison</span>
                                     @elseif($complaint->complaint_type === 'retard_chargement')
-                                        Retard de chargement
+                                        <span class="badge bg-primary" style="font-size: 0.75rem;">Retard de chargement</span>
                                     @elseif($complaint->complaint_type === 'marchandise_endommagée')
-                                        Marchandise endommagée
+                                        <span class="badge bg-dark" style="font-size: 0.75rem;">Marchandise endommagée</span>
                                     @elseif($complaint->complaint_type === 'mauvais_comportement')
-                                        Mauvais comportement
+                                        <span class="badge bg-secondary" style="font-size: 0.75rem;">Mauvais comportement</span>
                                     @else
-                                        Autre
+                                        <span class="badge bg-light text-dark" style="font-size: 0.75rem;">Autre</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="align-middle">
                                     @if($complaint->urgency_level === 'high')
-                                        <span class="badge bg-danger">Élevé</span>
+                                        <span class="badge bg-danger" style="font-size: 0.75rem;">Élevé</span>
                                     @elseif($complaint->urgency_level === 'medium')
-                                        <span class="badge bg-warning">Moyen</span>
+                                        <span class="badge bg-warning" style="font-size: 0.75rem;">Moyen</span>
                                     @elseif($complaint->urgency_level === 'critical')
-                                        <span class="badge bg-dark">Critique</span>
+                                        <span class="badge bg-dark" style="font-size: 0.75rem;">Critique</span>
                                     @else
-                                        <span class="badge bg-success">Faible</span>
+                                        <span class="badge bg-success" style="font-size: 0.75rem;">Faible</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="align-middle">
                                     @if($complaint->status === 'résolu')
-                                        <span class="badge bg-success">Résolu</span>
+                                        <span class="badge bg-success" style="font-size: 0.75rem;">Résolu</span>
                                     @elseif($complaint->status === 'en_attente')
-                                        <span class="badge bg-warning">En attente</span>
+                                        <span class="badge bg-warning" style="font-size: 0.75rem;">En attente</span>
                                     @else
-                                        <span class="badge bg-danger">Non résolu</span>
+                                        <span class="badge bg-danger" style="font-size: 0.75rem;">Non résolu</span>
                                     @endif
                                 </td>
-                                <td>{{ $complaint->created_at->format('d/m/Y H:i') }}</td>
-                                <td>
-                                    <div class="btn-group" role="group">
+                                <td class="align-middle">{{ $complaint->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="p-1">
+                                    <div class="d-flex gap-1 justify-content-center">
                                         <a href="{{ route('admin.complaints.show', $complaint) }}"
-                                           class="btn btn-sm btn-info"
+                                           class="btn btn-xs btn-info p-1" style="font-size: 0.8rem;"
                                            title="Voir les détails">
-                                            <i class="fas fa-eye"></i>
+                                            <i class="fas fa-eye"></i> Voir
                                         </a>
                                         @if(auth()->user()->isAdmin())
                                         <form action="{{ route('admin.complaints.destroy', $complaint) }}"
@@ -92,7 +92,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="btn btn-sm btn-danger"
+                                                    class="btn btn-xs btn-danger p-1" style="font-size: 0.8rem;"
                                                     title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </button>

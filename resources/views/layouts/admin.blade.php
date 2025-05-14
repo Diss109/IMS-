@@ -7,6 +7,8 @@
     <title>Administration - IMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" rel="stylesheet">
     <!-- Add jQuery if not already included -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -36,8 +38,8 @@
             --sidebar-width: 250px;
             --sidebar-collapsed-width: 65px;
             --transition-speed: 0.3s;
-            --card-border-radius: 0.75rem;
-            --box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1);
+            --card-border-radius: 1rem;
+            --box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
             --scrollbar-width: 5px;
             --scrollbar-thumb: rgba(255, 255, 255, 0.3);
             --scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
@@ -53,9 +55,9 @@
 
         body {
             overflow-x: hidden;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
             color: var(--text-color);
-            background-color: #f5f7fb;
+            background-color: #f8faff;
         }
 
         /* Scrollbar styling */
@@ -113,9 +115,9 @@
             top: 0;
             bottom: 0;
             left: 0;
-            width: var(--sidebar-collapsed-width);
+            width: var(--sidebar-width);
             background: linear-gradient(180deg, var(--dark-color) 0%, #203a65 100%);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
             transition: all var(--transition-speed) ease;
             z-index: 999;
             overflow-y: auto;
@@ -128,6 +130,11 @@
             scrollbar-width: thin;
             scrollbar-color: var(--scrollbar-thumb) transparent;
             will-change: width;
+            border-radius: 0 15px 15px 0;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
         }
 
         .sidebar::-webkit-scrollbar {
@@ -147,14 +154,18 @@
             background: var(--scrollbar-thumb-hover);
         }
 
-        .sidebar:hover {
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg, #1a3868 0%, #264375 100%);
-        }
-
+        /* Position the nav to fill available space */
         .sidebar nav {
             width: 100%;
-            padding-bottom: 2rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Main menu items container */
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
         }
 
         .sidebar .nav-link {
@@ -167,7 +178,8 @@
             white-space: nowrap;
             position: relative;
             border-left: 4px solid transparent;
-            margin: 2px 0;
+            margin: 4px 8px;
+            border-radius: 10px;
         }
 
         .sidebar .nav-link:hover {
@@ -175,6 +187,7 @@
             border-left-color: var(--sidebar-hover-border);
             color: white;
             box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+            transform: translateX(3px);
         }
 
         .sidebar .nav-link.active {
@@ -210,25 +223,52 @@
 
         .sidebar-link-text {
             margin-left: 10px;
-            opacity: 0;
+            opacity: 1;
             transition: opacity var(--transition-speed) ease, transform 0.2s ease;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: calc(var(--sidebar-width) - 80px);
         }
 
-        .sidebar:hover .sidebar-link-text {
-            opacity: 1;
+        .sidebar.collapsed .sidebar-link-text {
+            opacity: 0;
         }
 
         .sidebar .nav-link:hover .sidebar-link-text {
             transform: translateX(3px);
         }
 
+        .sidebar-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+            font-size: 18px;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
         /* Main Content Area */
         .main-content {
-            margin-left: var(--sidebar-collapsed-width);
+            margin-left: var(--sidebar-width);
             padding: 1.5rem;
             transition: all var(--transition-speed) ease;
             min-height: 100vh;
-            width: calc(100% - var(--sidebar-collapsed-width));
+            width: calc(100% - var(--sidebar-width));
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             will-change: margin-left, width;
@@ -237,10 +277,9 @@
             perspective: 1000px;
         }
 
-        .sidebar:hover ~ .main-content {
-            margin-left: var(--sidebar-width);
-            width: calc(100% - var(--sidebar-width));
-            transition-delay: 0.05s;
+        .sidebar.collapsed ~ .main-content {
+            margin-left: var(--sidebar-collapsed-width);
+            width: calc(100% - var(--sidebar-collapsed-width));
         }
 
         @media (max-width: 768px) {
@@ -248,7 +287,11 @@
                 width: 0;
             }
 
-            .sidebar:hover {
+            .sidebar.collapsed {
+                width: 0;
+            }
+
+            .sidebar:not(.collapsed) {
                 width: var(--sidebar-width);
             }
 
@@ -257,7 +300,7 @@
                 width: 100%;
             }
 
-            .sidebar:hover ~ .main-content {
+            .sidebar:not(.collapsed) ~ .main-content {
                 margin-left: var(--sidebar-width);
                 width: calc(100% - var(--sidebar-width));
             }
@@ -268,14 +311,15 @@
             border: none;
             border-radius: var(--card-border-radius);
             box-shadow: var(--box-shadow);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.3s, box-shadow 0.3s;
             margin-bottom: 1.5rem;
             overflow: hidden;
+            position: relative;
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+            box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.15);
         }
 
         .card-header {
@@ -283,6 +327,10 @@
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             padding: 1.25rem 1.5rem;
             font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .card-body {
@@ -292,11 +340,14 @@
         /* Table Styling */
         .table {
             margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0 8px;
         }
 
         .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            padding: 0.5rem;
         }
 
         .table thead th {
@@ -305,31 +356,71 @@
             font-weight: 600;
             border-bottom: 2px solid rgba(0, 0, 0, 0.05);
             white-space: nowrap;
+            padding: 1rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            background-color: white;
+            margin-bottom: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .table tbody tr:hover {
             background-color: rgba(67, 97, 238, 0.03);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .table tbody td:first-child {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+
+        .table tbody td:last-child {
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
         }
 
         /* Form Controls */
         .form-control, .form-select {
-            border-radius: 0.5rem;
-            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
             border: 1px solid rgba(0, 0, 0, 0.1);
-            transition: all 0.2s;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
         }
 
         .form-control:focus, .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+            box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
+            transform: translateY(-1px);
         }
 
         /* Buttons */
         .btn {
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            padding: 0.5rem 1.25rem;
             font-weight: 500;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
         .btn-primary {
@@ -340,7 +431,6 @@
         .btn-primary:hover {
             background-color: var(--primary-hover);
             border-color: var(--primary-hover);
-            transform: translateY(-2px);
         }
 
         .btn-outline-primary {
@@ -351,7 +441,6 @@
         .btn-outline-primary:hover {
             background-color: var(--primary-color);
             color: #fff;
-            transform: translateY(-2px);
         }
 
         /* Notification badge */
@@ -362,14 +451,27 @@
             position: absolute;
             top: -5px;
             right: -5px;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             font-size: 0.65rem;
             font-weight: bold;
             border-radius: 50%;
             background-color: var(--danger-color);
             color: white;
             box-shadow: 0 0 0 2px white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(231, 76, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+            }
         }
 
         /* Cursor pointer for interactive elements */
@@ -379,11 +481,12 @@
 
         /* Make notification bell stand out more */
         #notification-bell i {
-            transition: color 0.2s ease;
+            transition: color 0.2s ease, transform 0.2s;
         }
 
         #notification-bell:hover i {
             color: var(--primary-color) !important;
+            transform: scale(1.2);
         }
 
         /* No data state */
@@ -391,73 +494,246 @@
             text-align: center;
             padding: 3rem;
             color: var(--text-muted);
+            background: linear-gradient(145deg, #f8f9fa, #ffffff);
+            border-radius: 15px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .no-data i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
             opacity: 0.5;
+            color: var(--primary-color);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.4em 0.7em;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            border-radius: 6px;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Page title */
+        .page-title {
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        /* Card with gradient borders */
+        .border-gradient {
+            position: relative;
+            border-radius: var(--card-border-radius);
+            background: white;
+            z-index: 1;
+        }
+
+        .border-gradient::before {
+            content: "";
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            z-index: -1;
+            border-radius: calc(var(--card-border-radius) + 2px);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .border-gradient:hover::before {
+            opacity: 1;
+        }
+
+        /* Custom Scrollbar for dropdowns */
+        .dropdown-menu {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .dropdown-menu::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Tooltip enhancements */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: auto;
+            min-width: 120px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Bottom fixed position for logout */
+        .sidebar-footer {
+            margin-top: auto;
+            padding-bottom: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        /* Special styling for the logout button */
+        .logout-button {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+            border-radius: 10px;
+            margin: 4px 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .logout-button:hover {
+            background-color: rgba(220, 53, 69, 0.2);
+            transform: translateX(3px);
+        }
+
+        .logout-button .sidebar-menu-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            font-size: 18px;
+        }
+
+        .logout-button .sidebar-link-text {
+            font-weight: 500;
+        }
+
+        /* Subtle animation for logout icon */
+        .logout-button:hover .sidebar-menu-logo {
+            animation: logoutPulse 1s infinite;
+        }
+
+        @keyframes logoutPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
     </style>
+    @yield('styles')
 </head>
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
         <nav class="nav flex-column">
-            @if(Auth::user()->role === \App\Models\User::ROLE_ADMIN)
-                <!-- Admin-only links -->
-                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Tableau de bord Admin</span>
-                </a>
-                <a href="{{ route('admin.complaints.index') }}" class="nav-link {{ request()->routeIs('admin.complaints.*') ? 'active' : '' }}">
-                    <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Toutes les réclamations</span>
-                </a>
-                <a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
-                    <i class="fas fa-truck sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Prestataires</span>
-                </a>
-                <a href="{{ route('admin.evaluations.index') }}" class="nav-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
-                    <i class="fas fa-star sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Évaluations</span>
-                </a>
-                <a href="{{ route('admin.predictions.index') }}" class="nav-link {{ request()->routeIs('admin.predictions.*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-bar sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Prédictions</span>
-                </a>
-                <a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">KPIs</span>
-                </a>
-                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <i class="fas fa-users sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Gestion des Utilisateurs</span>
-                </a>
-            @else
-                <!-- Regular user links -->
-                <a href="{{ route('user.dashboard') }}" class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Tableau de bord</span>
-                </a>
-                <a href="{{ route('user.complaints.index') }}" class="nav-link {{ request()->routeIs('user.complaints.*') ? 'active' : '' }}">
-                    <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Mes réclamations</span>
-                </a>
-                <a href="{{ route('user.messages.index') }}" class="nav-link {{ request()->routeIs('user.messages.*') ? 'active' : '' }}">
-                    <i class="fas fa-comments sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Messages</span>
-                    <span id="unread-messages-count" class="badge bg-danger rounded-pill ms-2" style="display: none;">0</span>
-                </a>
-            @endif
-            <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt sidebar-menu-logo"></i>
-                <span class="sidebar-link-text">Déconnexion</span>
-            </a>
+            <!-- Main menu items -->
+            <div class="sidebar-menu">
+                @if(Auth::user()->role === \App\Models\User::ROLE_ADMIN)
+                    <!-- Admin-only links -->
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-home sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Tableau de bord Admin</span>
+                    </a>
+                    <a href="{{ route('admin.complaints.index') }}" class="nav-link {{ request()->routeIs('admin.complaints.*') ? 'active' : '' }}">
+                        <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Toutes les réclamations</span>
+                    </a>
+                    <a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
+                        <i class="fas fa-truck sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Prestataires</span>
+                    </a>
+                    <a href="{{ route('admin.evaluations.index') }}" class="nav-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
+                        <i class="fas fa-star sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Évaluations</span>
+                    </a>
+                    <a href="{{ route('admin.predictions.index') }}" class="nav-link {{ request()->routeIs('admin.predictions.*') ? 'active' : '' }}">
+                        <i class="fas fa-chart-bar sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Prédictions</span>
+                    </a>
+                    <a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
+                        <i class="fas fa-chart-line sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">KPIs</span>
+                    </a>
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-users sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Gestion des Utilisateurs</span>
+                    </a>
+                @else
+                    <!-- Regular user links -->
+                    <a href="{{ route('user.dashboard') }}" class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-home sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Tableau de bord</span>
+                    </a>
+                    <a href="{{ route('user.complaints.index') }}" class="nav-link {{ request()->routeIs('user.complaints.*') ? 'active' : '' }}">
+                        <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Mes réclamations</span>
+                    </a>
+                    <a href="{{ route('user.messages.index') }}" class="nav-link {{ request()->routeIs('user.messages.*') ? 'active' : '' }}">
+                        <i class="fas fa-comments sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Messages</span>
+                        <span id="unread-messages-count" class="badge bg-danger rounded-pill ms-2" style="display: none;">0</span>
+                    </a>
+                @endif
+            </div>
 
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                @csrf
-            </form>
+            <!-- Footer with logout -->
+            <div class="sidebar-footer">
+                <a href="{{ route('logout') }}" class="logout-button" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt sidebar-menu-logo"></i>
+                    <span class="sidebar-link-text">Déconnexion</span>
+                </a>
+
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
+            </div>
         </nav>
     </div>
 
@@ -489,21 +765,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4361ee&color=fff" class="rounded-circle me-2" width="32" height="32">
-                            <span>{{ Auth::user()->name }}</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form-header').submit();">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-                                </a>
-                                <form id="logout-form-header" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </li>
-                        </ul>
+                    <!-- User display (without dropdown) -->
+                    <div class="d-flex align-items-center">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4361ee&color=fff" class="rounded-circle me-2" width="32" height="32">
+                        <span class="text-dark">{{ Auth::user()->name }}</span>
                     </div>
                 @endif
             </div>
@@ -529,255 +794,272 @@
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom Script -->
+    @section('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Close alert messages after 5 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Make sure the sidebar is expanded by default
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            // Remove collapsed class to ensure sidebar is expanded
+            sidebar.classList.remove('collapsed');
+
+            // Make sure sidebar-link-text elements are visible
+            document.querySelectorAll('.sidebar-link-text').forEach(text => {
+                text.style.opacity = '1';
+            });
+        }
+
+        // Unread messages counter (only for regular users)
+        @if(Auth::check() && Auth::user()->role !== \App\Models\User::ROLE_ADMIN)
+        var unreadMessagesCountUrl = '{{ route("user.messages.unreadCount") }}';
+
+        function fetchUnreadMessagesCount() {
+            fetch(unreadMessagesCountUrl)
+                .then(response => response.json())
+                .catch(() => ({ count: 0 }))
+                .then(data => {
+                    const unreadMessagesCount = document.getElementById('unread-messages-count');
+                    if (unreadMessagesCount) {
+                        if (data.count > 0) {
+                            unreadMessagesCount.textContent = data.count;
+                            unreadMessagesCount.style.display = 'inline';
+                        } else {
+                            unreadMessagesCount.style.display = 'none';
+                        }
+                    }
+                });
+        }
+
+        // Check for unread messages every 30 seconds
+        fetchUnreadMessagesCount();
+        setInterval(fetchUnreadMessagesCount, 30000);
+        @endif
+
+        // Notification system
+        const notificationBell = document.getElementById('notification-bell');
+        const notificationBadge = document.getElementById('notification-badge');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        const notificationList = document.getElementById('notification-list');
+
+        // Add cursor-pointer class to elements
+        if (notificationBell) {
+            notificationBell.classList.add('cursor-pointer');
+        }
+
+        if (notificationBell && notificationBadge && notificationDropdown) {
+            // Add click event to notification bell
+            notificationBell.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent event bubbling
+
+                // Handle dropdown visibility
+                if (notificationDropdown.style.display === 'block') {
+                    notificationDropdown.style.display = 'none';
+                } else {
+                    notificationDropdown.style.display = 'block';
+
+                    // Ensure proper positioning
+                    const bellRect = notificationBell.getBoundingClientRect();
+                    notificationDropdown.style.position = 'absolute';
+                    notificationDropdown.style.top = (bellRect.height + 5) + 'px';
+                    notificationDropdown.style.right = '0';
+
+                    // Fetch notifications when opening dropdown
+                    fetchNotifications();
+                }
             });
 
-            // Close alert messages after 5 seconds
-            setTimeout(function() {
-                document.querySelectorAll('.alert').forEach(function(alert) {
-                    var bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                });
-            }, 5000);
+            // Nettoyer et mettre à jour la liste des notifications
+            function clearNotificationList() {
+                notificationList.innerHTML = '';
+            }
 
-            // Unread messages counter (only for regular users)
-            @if(Auth::check() && Auth::user()->role !== \App\Models\User::ROLE_ADMIN)
-            function fetchUnreadMessagesCount() {
-                fetch('{{ route("user.messages.unreadCount") }}')
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (notificationDropdown.style.display === 'block' &&
+                    !notificationBell.contains(e.target) &&
+                    !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.style.display = 'none';
+                }
+            });
+
+            // Function to fetch unread count
+            function fetchUnreadCount() {
+                // Get unread count from the correct endpoint
+                fetch('/admin/notifications/unread-count')
                     .then(response => response.json())
                     .catch(() => ({ count: 0 }))
                     .then(data => {
-                        const unreadMessagesCount = document.getElementById('unread-messages-count');
-                        if (unreadMessagesCount) {
-                            if (data.count > 0) {
-                                unreadMessagesCount.textContent = data.count;
-                                unreadMessagesCount.style.display = 'inline';
-                            } else {
-                                unreadMessagesCount.style.display = 'none';
-                            }
+                        if (data.count > 0) {
+                            notificationBadge.textContent = data.count > 9 ? '9+' : data.count;
+                            notificationBadge.style.display = 'flex';
+                        } else {
+                            notificationBadge.style.display = 'none';
                         }
                     });
             }
 
-            // Check for unread messages every 30 seconds
-            fetchUnreadMessagesCount();
-            setInterval(fetchUnreadMessagesCount, 30000);
-            @endif
+            // Function to fetch notifications
+            function fetchNotifications() {
+                // Show loading state
+                notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Chargement...</li>';
 
-            // Notification system
-            const notificationBell = document.getElementById('notification-bell');
-            const notificationBadge = document.getElementById('notification-badge');
-            const notificationDropdown = document.getElementById('notification-dropdown');
-            const notificationList = document.getElementById('notification-list');
+                // Fetch notifications
+                fetch('/admin/notifications/latest')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Vider la liste de notifications
+                        notificationList.innerHTML = '';
 
-            // Add cursor-pointer class to elements
-            if (notificationBell) {
-                notificationBell.classList.add('cursor-pointer');
-            }
+                        if (data.notifications && data.notifications.length > 0) {
+                            // Solution ultra-simple: utiliser innerHTML avec éléments HTML directs
+                            data.notifications.forEach(function(notification) {
+                                // Définir les variables
+                                const bgColor = notification.is_read ? '#ffffff' : '#f0f0f0';
+                                const date = new Date(notification.created_at).toLocaleString('fr-FR');
+                                let complaintId = 0;
 
-            if (notificationBell && notificationBadge && notificationDropdown) {
-                // Add click event to notification bell
-                notificationBell.addEventListener('click', function(e) {
-                    e.stopPropagation(); // Prevent event bubbling
-
-                    // Handle dropdown visibility
-                    if (notificationDropdown.style.display === 'block') {
-                        notificationDropdown.style.display = 'none';
-                    } else {
-                        notificationDropdown.style.display = 'block';
-
-                        // Ensure proper positioning
-                        const bellRect = notificationBell.getBoundingClientRect();
-                        notificationDropdown.style.position = 'absolute';
-                        notificationDropdown.style.top = (bellRect.height + 5) + 'px';
-                        notificationDropdown.style.right = '0';
-
-                        // Fetch notifications when opening dropdown
-                        fetchNotifications();
-                    }
-                });
-
-                // Nettoyer et mettre à jour la liste des notifications
-                function clearNotificationList() {
-                    notificationList.innerHTML = '';
-                }
-
-                // Close dropdown when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (notificationDropdown.style.display === 'block' &&
-                        !notificationBell.contains(e.target) &&
-                        !notificationDropdown.contains(e.target)) {
-                        notificationDropdown.style.display = 'none';
-                    }
-                });
-
-                // Function to fetch unread count
-                function fetchUnreadCount() {
-                    // Get unread count from the correct endpoint
-                    fetch('/admin/notifications/unread-count')
-                        .then(response => response.json())
-                        .catch(() => ({ count: 0 }))
-                        .then(data => {
-                            if (data.count > 0) {
-                                notificationBadge.textContent = data.count > 9 ? '9+' : data.count;
-                                notificationBadge.style.display = 'flex';
-                            } else {
-                                notificationBadge.style.display = 'none';
-                            }
-                        });
-                }
-
-                // Function to fetch notifications
-                function fetchNotifications() {
-                    // Show loading state
-                    notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Chargement...</li>';
-
-                    // Fetch notifications
-                    fetch('/admin/notifications/latest')
-                        .then(response => response.json())
-                        .then(data => {
-                            // Vider la liste de notifications
-                            notificationList.innerHTML = '';
-
-                            if (data.notifications && data.notifications.length > 0) {
-                                // Solution ultra-simple: utiliser innerHTML avec éléments HTML directs
-                                data.notifications.forEach(function(notification) {
-                                    // Définir les variables
-                                    const bgColor = notification.is_read ? '#ffffff' : '#f0f0f0';
-                                    const date = new Date(notification.created_at).toLocaleString('fr-FR');
-                                    let complaintId = 0;
-
-                                    // Essayer d'extraire l'ID de la notification
-                                    try {
-                                        if (notification.related_id && !isNaN(parseInt(notification.related_id))) {
-                                            complaintId = parseInt(notification.related_id);
-                                        } else if (notification.message) {
-                                            // Essayer d'extraire l'ID du message s'il est au format "Réclamation #123"
-                                            const matches = notification.message.match(/#(\d+)/);
-                                            if (matches && matches[1]) {
-                                                complaintId = parseInt(matches[1]);
-                                            }
+                                // Essayer d'extraire l'ID de la notification
+                                try {
+                                    if (notification.related_id && !isNaN(parseInt(notification.related_id))) {
+                                        complaintId = parseInt(notification.related_id);
+                                    } else if (notification.message) {
+                                        // Essayer d'extraire l'ID du message s'il est au format "Réclamation #123"
+                                        const matches = notification.message.match(/#(\d+)/);
+                                        if (matches && matches[1]) {
+                                            complaintId = parseInt(matches[1]);
                                         }
-                                    } catch(e) {
-                                        console.error('Erreur lors de l\'extraction de l\'ID:', e);
                                     }
+                                } catch(e) {
+                                    console.error('Erreur lors de l\'extraction de l\'ID:', e);
+                                }
 
-                                    // Ajouter la notification comme un élément de liste avec boutons
-                                    const listItem = document.createElement('li');
-                                    listItem.className = 'list-group-item';
-                                    listItem.style.backgroundColor = bgColor;
-                                    listItem.style.position = 'relative';
-                                    listItem.style.padding = '10px 30px 10px 15px';
+                                // Ajouter la notification comme un élément de liste avec boutons
+                                const listItem = document.createElement('li');
+                                listItem.className = 'list-group-item';
+                                listItem.style.backgroundColor = bgColor;
+                                listItem.style.position = 'relative';
+                                listItem.style.padding = '10px 30px 10px 15px';
 
-                                    listItem.innerHTML = `
-                                        <div>
-                                            <p class="mb-1">${notification.message}</p>
-                                            <small class="text-muted">${date}</small>
-                                        </div>
-                                        <div class="mt-2">
-                                            ${complaintId ? `<a href="/admin/complaints/${complaintId}" class="btn btn-sm btn-primary">Voir la réclamation</a>` : ''}
-                                        </div>
-                                        <button class="btn-close position-absolute" style="top:10px;right:10px;" onclick="deleteNotification(${notification.id})"></button>
-                                    `;
+                                listItem.innerHTML = `
+                                    <div>
+                                        <p class="mb-1">${notification.message}</p>
+                                        <small class="text-muted">${date}</small>
+                                    </div>
+                                    <div class="mt-2">
+                                        ${complaintId ? `<a href="/admin/complaints/${complaintId}" class="btn btn-sm btn-primary">Voir la réclamation</a>` : ''}
+                                    </div>
+                                    <button class="btn-close position-absolute" style="top:10px;right:10px;" onclick="deleteNotification(${notification.id})"></button>
+                                `;
 
-                                    notificationList.appendChild(listItem);
-                                });
-                            } else {
-                                notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Aucune notification récente</li>';
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching notifications:', error);
-                            notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Erreur lors du chargement des notifications</li>';
-                        });
-                }
-
-                // Function to mark notification as read
-                window.markNotificationAsRead = function(id, updateUI = true) {
-                    return fetch('/admin/notifications/mark-read', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({ id: id })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && updateUI) {
-                            fetchNotifications();
-                            fetchUnreadCount();
-                        }
-                        return data;
-                    });
-                };
-
-                // Function to delete notification
-                window.deleteNotification = function(id) {
-                    fetch('/admin/notifications/delete', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({ id: id })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            fetchNotifications();
-                            fetchUnreadCount();
-                        }
-                    });
-                };
-
-                // Mark all notifications as read
-                document.getElementById('mark-all-read').addEventListener('click', function() {
-                    fetch('/admin/notifications/mark-all-read', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                notificationList.appendChild(listItem);
+                            });
+                        } else {
+                            notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Aucune notification récente</li>';
                         }
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            fetchNotifications();
-                            fetchUnreadCount();
-                        }
+                    .catch(error => {
+                        console.error('Error fetching notifications:', error);
+                        notificationList.innerHTML = '<li class="list-group-item text-center text-muted py-3">Erreur lors du chargement des notifications</li>';
                     });
-                });
-
-                // Delete all notifications
-                document.getElementById('delete-all').addEventListener('click', function() {
-                    fetch('/admin/notifications/delete-all', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            fetchNotifications();
-                            fetchUnreadCount();
-                        }
-                    });
-                });
-
-                // Initial unread count fetch
-                fetchUnreadCount();
-
-                // Periodically check for new notifications (every 60 seconds)
-                setInterval(fetchUnreadCount, 60000);
             }
-        });
+
+            // Function to mark notification as read
+            window.markNotificationAsRead = function(id, updateUI = true) {
+                return fetch('/admin/notifications/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && updateUI) {
+                        fetchNotifications();
+                        fetchUnreadCount();
+                    }
+                    return data;
+                });
+            };
+
+            // Function to delete notification
+            window.deleteNotification = function(id) {
+                fetch('/admin/notifications/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchNotifications();
+                        fetchUnreadCount();
+                    }
+                });
+            };
+
+            // Mark all notifications as read
+            document.getElementById('mark-all-read').addEventListener('click', function() {
+                fetch('/admin/notifications/mark-all-read', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchNotifications();
+                        fetchUnreadCount();
+                    }
+                });
+            });
+
+            // Delete all notifications
+            document.getElementById('delete-all').addEventListener('click', function() {
+                fetch('/admin/notifications/delete-all', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchNotifications();
+                        fetchUnreadCount();
+                    }
+                });
+            });
+
+            // Initial unread count fetch
+            fetchUnreadCount();
+
+            // Periodically check for new notifications (every 60 seconds)
+            setInterval(fetchUnreadCount, 60000);
+        }
+    });
     </script>
     @stack('scripts')
+    <!-- Custom sidebar script -->
+    <script src="{{ asset('js/custom/sidebar.js') }}"></script>
 </body>
 </html>
