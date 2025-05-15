@@ -24,37 +24,33 @@
             </form>
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped table-sm" style="font-size: 0.85rem;">
-                <thead>
-                    <tr>
-                        <th style="width: 18%">Nom</th>
-                        <th style="width: 12%">Type</th>
-                        <th style="width: 22%">Email</th>
-                        <th style="width: 12%">Téléphone</th>
-                        <th style="width: 18%">Adresse</th>
-                        <th style="width: 18%">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($serviceProviders as $provider)
-                    <tr>
-                        <td class="align-middle">{{ $provider->name }}</td>
-                        <td class="align-middle">{{ \App\Models\ServiceProvider::getTypes()[$provider->service_type] ?? '' }}</td>
-                        <td class="align-middle">{{ $provider->email }}</td>
-                        <td class="align-middle">{{ $provider->phone }}</td>
-                        <td class="align-middle">{{ Str::limit($provider->address, 30) }}</td>
-                        <td class="p-1">
-                            <div class="d-flex gap-1 justify-content-center">
-                                <a href="{{ route('admin.evaluations.create', $provider->id) }}" class="btn btn-xs btn-primary p-1" style="font-size: 0.8rem;">Évaluer</a>
-                                <a href="{{ route('admin.evaluations.show', $provider->id) }}" class="btn btn-xs btn-info p-1" style="font-size: 0.8rem;">Voir</a>
-                            </div>
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Adresse</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($serviceProviders as $provider)
+                <tr>
+                    <td>{{ $provider->name }}</td>
+                    <td>{{ \App\Models\ServiceProvider::getTypes()[$provider->service_type] ?? '' }}</td>
+                    <td>{{ $provider->email }}</td>
+                    <td>{{ $provider->phone }}</td>
+                    <td>{{ $provider->address }}</td>
+                    <td>
+                        <a href="{{ route('admin.evaluations.create', $provider->id) }}" class="btn btn-sm btn-primary">Évaluer</a>
+                        <a href="{{ route('admin.evaluations.show', $provider->id) }}" class="btn btn-sm btn-info ms-1">Voir évaluations</a>
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
 
         <div class="mt-4 d-flex justify-content-center gap-2">
             @if ($serviceProviders->onFirstPage())
