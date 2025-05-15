@@ -59,7 +59,7 @@ class PredictionController extends Controller
     public function show($id)
     {
         $provider = ServiceProvider::with(['evaluations' => function($query) {
-                $query->orderBy('created_at', 'asc')->limit(10);
+                $query->orderBy('created_at', 'asc');
             }, 'predictions' => function($query) {
                 $query->orderBy('prediction_date', 'desc')->limit(5);
             }])
@@ -120,6 +120,38 @@ class PredictionController extends Controller
     }
 
     /**
+     * Debug data for a specific provider
+     */
+    public function debugChartData($id)
+    {
+        $provider = ServiceProvider::with(['evaluations' => function($query) {
+                $query->orderBy('created_at', 'asc');
+            }])
+            ->findOrFail($id);
+
+        // Format data for chart debugging
+        $evaluationDates = [];
+        $evaluationScores = [];
+
+        foreach ($provider->evaluations as $evaluation) {
+            $evaluationDates[] = $evaluation->created_at->format('M d');
+            $evaluationScores[] = $evaluation->total_score;
+        }
+
+        // Calculate regression line data
+        $regressionData = $this->calculateRegressionLine($provider->evaluations);
+
+        // Return JSON data for debugging
+        return response()->json([
+            'provider_name' => $provider->name,
+            'evaluations_count' => $provider->evaluations->count(),
+            'evaluation_dates' => $evaluationDates,
+            'evaluation_scores' => $evaluationScores,
+            'regression_data' => $regressionData,
+        ]);
+    }
+
+    /**
      * Generate regression line data points for chart
      */
     private function calculateRegressionLine($evaluations)
@@ -168,15 +200,20 @@ class PredictionController extends Controller
         }
 
         // Generate regression line points for chart
-        // Create 10 evenly spaced points along the line
+        // Create points along the line
         $regLineX = []; // dates for chart
         $regLineY = []; // calculated y values
 
-        // Add 90 days for future projection
-        $totalDays = $firstDate->diffInDays($lastDate) + 90;
+        // Add days for future projection (at least 90 days)
+        $totalDays = max(90, $firstDate->diffInDays($lastDate) + 90);
         $interval = max(1, floor($totalDays / 10)); // ensure interval is at least 1
 
-        for ($i = 0; $i <= 10; $i++) {
+        // Always include the first date (with the actual first evaluation date)
+        $regLineX[] = $firstDate->format('M d');
+        $regLineY[] = max(0, min(100, $yIntercept)); // constraints to 0-100
+
+        // Add evenly spaced points for the line
+        for ($i = 1; $i <= 10; $i++) {
             $days = $i * $interval;
             $regLineX[] = $firstDate->copy()->addDays($days)->format('M d');
             $score = max(0, min(100, $slope * $days + $yIntercept)); // constrain to 0-100

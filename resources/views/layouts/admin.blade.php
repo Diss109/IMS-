@@ -403,61 +403,67 @@
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
-        <nav class="nav flex-column">
-            @if(Auth::user()->role === \App\Models\User::ROLE_ADMIN)
-                <!-- Admin-only links -->
-                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Tableau de bord Admin</span>
-                </a>
-                <a href="{{ route('admin.complaints.index') }}" class="nav-link {{ request()->routeIs('admin.complaints.*') ? 'active' : '' }}">
-                    <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Toutes les réclamations</span>
-                </a>
-                <a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
-                    <i class="fas fa-truck sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Prestataires</span>
-                </a>
-                <a href="{{ route('admin.evaluations.index') }}" class="nav-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
-                    <i class="fas fa-star sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Évaluations</span>
-                </a>
-                <a href="{{ route('admin.predictions.index') }}" class="nav-link {{ request()->routeIs('admin.predictions.*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-bar sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Prédictions</span>
-                </a>
-                <a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
-                    <i class="fas fa-chart-line sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">KPIs</span>
-                </a>
-                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                    <i class="fas fa-users sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Gestion des Utilisateurs</span>
-                </a>
-            @else
-                <!-- Regular user links -->
-                <a href="{{ route('user.dashboard') }}" class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-home sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Tableau de bord</span>
-                </a>
-                <a href="{{ route('user.complaints.index') }}" class="nav-link {{ request()->routeIs('user.complaints.*') ? 'active' : '' }}">
-                    <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Mes réclamations</span>
-                </a>
-                <a href="{{ route('user.messages.index') }}" class="nav-link {{ request()->routeIs('user.messages.*') ? 'active' : '' }}">
-                    <i class="fas fa-comments sidebar-menu-logo"></i>
-                    <span class="sidebar-link-text">Messages</span>
-                    <span id="unread-messages-count" class="badge bg-danger rounded-pill ms-2" style="display: none;">0</span>
-                </a>
-            @endif
-            <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt sidebar-menu-logo"></i>
-                <span class="sidebar-link-text">Déconnexion</span>
-            </a>
+        <nav class="nav flex-column h-100 d-flex">
+            <div>
+                @if(Auth::user()->role === \App\Models\User::ROLE_ADMIN)
+                    <!-- Admin-only links -->
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-home sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Tableau de bord Admin</span>
+                    </a>
+                    <a href="{{ route('admin.complaints.index') }}" class="nav-link {{ request()->routeIs('admin.complaints.*') ? 'active' : '' }}">
+                        <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Toutes les réclamations</span>
+                    </a>
+                    <a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
+                        <i class="fas fa-truck sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Prestataires</span>
+                    </a>
+                    <a href="{{ route('admin.evaluations.index') }}" class="nav-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}">
+                        <i class="fas fa-star sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Évaluations</span>
+                    </a>
+                    <a href="{{ route('admin.predictions.index') }}" class="nav-link {{ request()->routeIs('admin.predictions.*') ? 'active' : '' }}">
+                        <i class="fas fa-chart-bar sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Prédictions</span>
+                    </a>
+                    <a href="{{ route('admin.kpis.index') }}" class="nav-link {{ request()->routeIs('admin.kpis.*') ? 'active' : '' }}">
+                        <i class="fas fa-chart-line sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Statistiques</span>
+                    </a>
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-users sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Gestion des Utilisateurs</span>
+                    </a>
+                @else
+                    <!-- Regular user links -->
+                    <a href="{{ route('user.dashboard') }}" class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-home sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Tableau de bord</span>
+                    </a>
+                    <a href="{{ route('user.complaints.index') }}" class="nav-link {{ request()->routeIs('user.complaints.*') ? 'active' : '' }}">
+                        <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Mes réclamations</span>
+                    </a>
+                    <a href="{{ route('user.messages.index') }}" class="nav-link {{ request()->routeIs('user.messages.*') ? 'active' : '' }}">
+                        <i class="fas fa-comments sidebar-menu-logo"></i>
+                        <span class="sidebar-link-text">Messages</span>
+                        <span id="unread-messages-count" class="badge bg-danger rounded-pill ms-2" style="display: none;">0</span>
+                    </a>
+                @endif
+            </div>
 
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                @csrf
-            </form>
+            <!-- Logout link separated at the bottom -->
+            <div class="mt-auto">
+                <a href="{{ route('logout') }}" class="nav-link mt-5" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt sidebar-menu-logo"></i>
+                    <span class="sidebar-link-text">Déconnexion</span>
+                </a>
+
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
+            </div>
         </nav>
     </div>
 

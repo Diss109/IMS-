@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('page_title', 'Tableau de bord KPI')
+@section('page_title', 'Statistiques')
 
 @section('content')
 <div class="container-fluid pt-4">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Tableau de bord KPI</h1>
+        <h1 class="h3 mb-0 text-gray-800">Statistiques</h1>
         <button id="print-btn" class="btn btn-primary btn-sm">
             <i class="fas fa-print me-2"></i>Imprimer
         </button>
@@ -104,7 +104,7 @@
         <div class="col-xl-8 col-lg-7">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Taux de réclamations</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Nombre de réclamations</h6>
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

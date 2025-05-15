@@ -164,6 +164,11 @@ Route::middleware(['web'])->group(function () {
         Route::get('/kpis/charts/type', [\App\Http\Controllers\Admin\GoogleChartController::class, 'typeChart'])->name('kpis.charts.type');
         Route::get('/kpis/charts/status', [\App\Http\Controllers\Admin\GoogleChartController::class, 'statusChart'])->name('kpis.charts.status');
         Route::get('/kpis/charts/urgency', [\App\Http\Controllers\Admin\GoogleChartController::class, 'urgencyChart'])->name('kpis.charts.urgency');
+        // New chart routes
+        Route::get('/kpis/charts/provider-types', [\App\Http\Controllers\Admin\GoogleChartController::class, 'providerTypesChart'])->name('kpis.charts.provider_types');
+        Route::get('/kpis/charts/evaluations-trend', [\App\Http\Controllers\Admin\GoogleChartController::class, 'evaluationsTrendChart'])->name('kpis.charts.evaluations_trend');
+        Route::get('/kpis/charts/user-roles', [\App\Http\Controllers\Admin\GoogleChartController::class, 'userRolesChart'])->name('kpis.charts.user_roles');
+
         Route::resource('kpis', KpiController::class)->except(['index']);
         Route::get('service-providers/{id}/evaluations/create', [EvaluationController::class, 'create'])->name('evaluations.create');
         Route::resource('evaluations', EvaluationController::class)->except(['create']);
@@ -176,6 +181,7 @@ Route::middleware(['web'])->group(function () {
         Route::get('predictions/{id}', [\App\Http\Controllers\Admin\PredictionController::class, 'show'])->name('predictions.show');
         Route::post('predictions/generate', [\App\Http\Controllers\Admin\PredictionController::class, 'generateAll'])->name('predictions.generate');
         Route::post('predictions/{id}/generate', [\App\Http\Controllers\Admin\PredictionController::class, 'generateForProvider'])->name('predictions.generate.provider');
+        Route::get('predictions/{id}/debug-chart', [\App\Http\Controllers\Admin\PredictionController::class, 'debugChartData'])->name('predictions.debug.chart');
 
         // Notifications
         Route::post('/notifications/delete', [App\Http\Controllers\NotificationController::class, 'destroy'])->middleware(['auth']);

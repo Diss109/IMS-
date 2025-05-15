@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('page_title', 'Tableau de bord KPI')
+@section('page_title', 'Statistiques')
 
 @section('content')
 <div class="container-fluid py-4">
     <!-- Print-only header -->
     <div class="print-header" style="display: none;">
-        <h1>Tableau de bord KPI - IMS</h1>
+        <h1>Statistiques - IMS</h1>
         <p>Rapport généré le {{ date('d/m/Y') }} à {{ date('H:i') }}</p>
         @if(request('period') == 'week')
             <p>Période: Cette semaine</p>
@@ -152,10 +152,10 @@
         <div class="col-xl-6 col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Taux de réclamations</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Nombre de réclamations</h6>
                 </div>
                 <div class="card-body">
-                    <iframe src="{{ route('admin.kpis.charts.trend') }}" style="width: 100%; height: 300px; border: none;"></iframe>
+                    <iframe src="{{ route('admin.kpis.charts.trend', request()->only(['period', 'start_date', 'end_date'])) }}" style="width: 100%; height: 300px; border: none;"></iframe>
                 </div>
             </div>
         </div>
@@ -167,7 +167,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Types de réclamations</h6>
                 </div>
                 <div class="card-body">
-                    <iframe src="{{ route('admin.kpis.charts.type') }}" style="width: 100%; height: 300px; border: none;"></iframe>
+                    <iframe src="{{ route('admin.kpis.charts.type', request()->only(['period', 'start_date', 'end_date'])) }}" style="width: 100%; height: 300px; border: none;"></iframe>
                 </div>
             </div>
         </div>
@@ -182,7 +182,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Statut des réclamations</h6>
                 </div>
                 <div class="card-body">
-                    <iframe src="{{ route('admin.kpis.charts.status') }}" style="width: 100%; height: 300px; border: none;"></iframe>
+                    <iframe src="{{ route('admin.kpis.charts.status', request()->only(['period', 'start_date', 'end_date'])) }}" style="width: 100%; height: 300px; border: none;"></iframe>
                 </div>
             </div>
         </div>
@@ -194,7 +194,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Niveau d'urgence</h6>
                 </div>
                 <div class="card-body">
-                    <iframe src="{{ route('admin.kpis.charts.urgency') }}" style="width: 100%; height: 300px; border: none;"></iframe>
+                    <iframe src="{{ route('admin.kpis.charts.urgency', request()->only(['period', 'start_date', 'end_date'])) }}" style="width: 100%; height: 300px; border: none;"></iframe>
                 </div>
             </div>
         </div>

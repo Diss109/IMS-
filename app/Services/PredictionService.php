@@ -210,15 +210,15 @@ class PredictionService
         if ($factors['trend'] === 'improving') {
             $trendInfo['status'] = 'success';
             $trendInfo['message'] = 'Tendance à l\'amélioration';
-            $trendInfo['icon'] = 'trending_up';
+            $trendInfo['icon'] = 'chart-line';
         } elseif ($factors['trend'] === 'declining') {
             $trendInfo['status'] = $factors['slope'] < -0.5 ? 'danger' : 'warning';
             $trendInfo['message'] = 'Tendance à la baisse';
-            $trendInfo['icon'] = 'trending_down';
+            $trendInfo['icon'] = 'chart-line';
         } else {
             $trendInfo['status'] = 'info';
             $trendInfo['message'] = 'Performance stable';
-            $trendInfo['icon'] = 'trending_flat';
+            $trendInfo['icon'] = 'chart-line';
         }
 
         return $trendInfo;

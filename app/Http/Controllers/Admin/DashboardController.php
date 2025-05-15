@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\BaseAdminController;
 use App\Models\Complaint;
+use App\Models\ServiceProvider;
+use App\Models\Evaluation;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -76,11 +79,30 @@ class DashboardController extends BaseAdminController
             ->take(10)
             ->get();
 
+        // Get service providers, evaluations, and users statistics
+        $providerStats = $this->getProviderStatistics($period, $startDate, $endDate);
+        $evaluationStats = $this->getEvaluationStatistics($period, $startDate, $endDate);
+        $userStats = $this->getUserStatistics();
+
+        // Get recent evaluations
+        $recentEvaluations = Evaluation::with(['serviceProvider', 'user'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get top-rated service providers
+        $topProviders = $this->getTopRatedProviders();
+
         return view('admin.dashboard', compact(
             'statistics',
             'chartData',
             'typeDistribution',
-            'recentComplaints'
+            'recentComplaints',
+            'providerStats',
+            'evaluationStats',
+            'userStats',
+            'recentEvaluations',
+            'topProviders'
         ))->with([
             'complaintTypes' => $this->complaintTypes,
             'urgencyLevels' => $this->urgencyLevels
@@ -133,7 +155,7 @@ class DashboardController extends BaseAdminController
             'custom' => $this->determineGroupByForCustomRange($query),
             default => 'date',
         };
-        
+
         // No need to apply date filtering again as it's already applied to $query in index method
 
         if ($groupBy === 'month') {
@@ -220,15 +242,15 @@ class DashboardController extends BaseAdminController
     {
         // Get the min and max dates from the query to calculate range
         $dateRange = $query->clone()->selectRaw('MIN(created_at) as min_date, MAX(created_at) as max_date')->first();
-        
+
         if (!$dateRange->min_date || !$dateRange->max_date) {
             return 'date'; // Default to daily if no data
         }
-        
+
         $minDate = Carbon::parse($dateRange->min_date);
         $maxDate = Carbon::parse($dateRange->max_date);
         $diffInDays = $maxDate->diffInDays($minDate);
-        
+
         // Use appropriate grouping based on range size
         if ($diffInDays <= 31) {
             return 'date'; // Daily for ranges up to a month
@@ -268,5 +290,129 @@ class DashboardController extends BaseAdminController
             'data' => $types->pluck('count'),
             'backgroundColor' => $types->map(fn($type) => $colors[$type->complaint_type] ?? '#858796'),
         ];
+    }
+
+    // New methods to get additional statistics
+
+    private function getProviderStatistics($period, $startDate, $endDate)
+    {
+        $query = ServiceProvider::query();
+
+        // Apply date filters if needed
+        if ($startDate && $endDate) {
+            $endDateWithTime = Carbon::parse($endDate)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDateWithTime]);
+        } else {
+            // Apply period filter
+            $periodStartDate = $this->getStartDate($period);
+            $query->where('created_at', '>=', $periodStartDate);
+        }
+
+        $total = $query->count();
+
+        // Count by service type
+        $typeDistribution = ServiceProvider::select('service_type', DB::raw('count(*) as count'))
+            ->groupBy('service_type')
+            ->get()
+            ->pluck('count', 'service_type')
+            ->toArray();
+
+        // Get providers with evaluations
+        $withEvaluations = ServiceProvider::has('evaluations')->count();
+
+        // Get new providers in the last month
+        $newLastMonth = ServiceProvider::where('created_at', '>=', now()->subMonth())->count();
+
+        return [
+            'total' => $total,
+            'type_distribution' => $typeDistribution,
+            'with_evaluations' => $withEvaluations,
+            'new_last_month' => $newLastMonth
+        ];
+    }
+
+    private function getEvaluationStatistics($period, $startDate, $endDate)
+    {
+        $query = Evaluation::query();
+
+        // Apply date filters if needed
+        if ($startDate && $endDate) {
+            $endDateWithTime = Carbon::parse($endDate)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDateWithTime]);
+        } else {
+            // Apply period filter
+            $periodStartDate = $this->getStartDate($period);
+            $query->where('created_at', '>=', $periodStartDate);
+        }
+
+        $total = $query->count();
+
+        // Count evaluations by month
+        $lastSixMonths = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $startOfMonth = $month->copy()->startOfMonth();
+            $endOfMonth = $month->copy()->endOfMonth();
+
+            $count = Evaluation::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            $lastSixMonths->put($month->format('M Y'), $count);
+        }
+
+        // Average score calculation - assuming there's a total_score column or scores relation
+        $avgScore = Evaluation::whereHas('scores')
+            ->with('scores')
+            ->get()
+            ->avg(function($evaluation) {
+                return $evaluation->scores->avg('score');
+            });
+
+        return [
+            'total' => $total,
+            'monthly_trend' => $lastSixMonths,
+            'avg_score' => round($avgScore, 1) ?? 0
+        ];
+    }
+
+    private function getUserStatistics()
+    {
+        $totalUsers = User::count();
+        $adminUsers = User::where('role', User::ROLE_ADMIN)->count();
+        $activeLastMonth = User::where('updated_at', '>=', now()->subMonth())->count();
+
+        // Role distribution
+        $roleDistribution = User::select('role', DB::raw('count(*) as count'))
+            ->groupBy('role')
+            ->get()
+            ->pluck('count', 'role')
+            ->toArray();
+
+        return [
+            'total' => $totalUsers,
+            'admins' => $adminUsers,
+            'active_last_month' => $activeLastMonth,
+            'role_distribution' => $roleDistribution
+        ];
+    }
+
+    private function getTopRatedProviders($limit = 5)
+    {
+        return ServiceProvider::has('evaluations')
+            ->withCount('evaluations')
+            ->with(['evaluations' => function($query) {
+                $query->with('scores');
+            }])
+            ->get()
+            ->map(function($provider) {
+                // Calculate average score across all evaluations
+                $avgScore = $provider->evaluations->flatMap(function($eval) {
+                    return $eval->scores;
+                })->avg('score') ?? 0;
+
+                $provider->average_score = round($avgScore, 1);
+                return $provider;
+            })
+            ->sortByDesc('average_score')
+            ->take($limit)
+            ->values();
     }
 }
