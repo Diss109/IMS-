@@ -4,80 +4,294 @@
 
 @section('styles')
 <style>
-    .prediction-card {
-        border-left: 5px solid #4e73df;
+    .card-accent {
+        border-top: 4px solid;
     }
-    .metric-card {
-        height: 100%;
-        transition: all 0.2s;
+    .card-accent-primary {
+        border-top-color: #4e73df;
     }
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    .card-accent-success {
+        border-top-color: #1cc88a;
     }
-    .trend-improving {
-        border-left: 5px solid #1cc88a;
+    .card-accent-warning {
+        border-top-color: #f6c23e;
     }
-    .trend-declining {
-        border-left: 5px solid #e74a3b;
+    .card-accent-danger {
+        border-top-color: #e74a3b;
     }
-    .trend-stable {
-        border-left: 5px solid #36b9cc;
+    .card-accent-info {
+        border-top-color: #36b9cc;
     }
-    .equal-height-row {
-        display: flex;
-        flex-wrap: wrap;
+    .prediction-badge {
+        font-size: 1rem;
+        padding: 0.5rem 0.75rem;
     }
-    .equal-height-col {
-        display: flex;
-        flex-direction: column;
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
     }
-    .equal-height-card {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+    .stat-label {
+        font-size: 0.8rem;
+        color: #858796;
     }
-    .equal-height-card .card-body {
-        flex: 1;
+    .trend-icon {
+        font-size: 1rem;
+        margin-right: 0.25rem;
+    }
+    .prediction-period {
+        font-size: 0.8rem;
+        color: #858796;
+        margin-top: 0.25rem;
+    }
+    .change-point {
+        padding-left: 10px;
+        border-left: 3px solid #e74a3b;
+        margin-bottom: 8px;
+    }
+    .card {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
     }
 </style>
 @endsection
 
 @section('content')
 <div class="container-fluid">
+    <!-- Header -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
-            Prévision pour {{ $provider->name }}
+            Prévision: {{ $provider->name }}
         </h1>
-        <a href="{{ route('admin.predictions.index') }}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Retour aux prévisions
-        </a>
+        <div>
+            <a href="{{ route('admin.predictions.regenerate', $provider->id) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-sync"></i> Régénérer
+            </a>
+            <a href="{{ route('admin.predictions.index') }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+        </div>
     </div>
 
-    <div class="row equal-height-row">
-        <!-- Provider Info Card -->
-        <div class="col-lg-4 mb-4 equal-height-col">
-            <div class="card shadow mb-4 equal-height-card">
+    @if(!$latestPrediction && $provider->evaluations->count() < 5)
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Données insuffisantes pour générer une prévision (minimum 5 évaluations requises).
+        </div>
+    @endif
+
+    <!-- Main content -->
+    <div class="row">
+        <!-- Prediction Overview -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Résumé des Prévisions</h6>
+                    @if($latestPrediction)
+                        <span class="badge bg-secondary">Dernière mise à jour: {{ $latestPrediction->prediction_date->format('d/m/Y') }}</span>
+                    @endif
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Monthly Prediction -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 card-accent {{ $predictions['next_month'] ? ($predictions['next_month']->predicted_score >= 75 ? 'card-accent-success' : ($predictions['next_month']->predicted_score >= 50 ? 'card-accent-warning' : 'card-accent-danger')) : 'card-accent-primary' }}">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title font-weight-bold text-gray-800">Prochain Mois</h5>
+                                    @if(isset($predictions['next_month']))
+                                        <div class="stat-value mb-0 {{ $predictions['next_month']->predicted_score >= 75 ? 'text-success' : ($predictions['next_month']->predicted_score >= 50 ? 'text-warning' : 'text-danger') }}">
+                                            {{ round($predictions['next_month']->predicted_score, 1) }}
+                                        </div>
+                                        <div class="small text-muted mt-2">
+                                            Précision: {{ number_format($predictions['next_month']->confidence_level * 100, 1) }}%
+                                        </div>
+                                    @else
+                                        <div class="text-muted py-3">Non disponible</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quarterly Prediction -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 card-accent {{ $predictions['next_quarter'] ? ($predictions['next_quarter']->predicted_score >= 75 ? 'card-accent-success' : ($predictions['next_quarter']->predicted_score >= 50 ? 'card-accent-warning' : 'card-accent-danger')) : 'card-accent-primary' }}">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title font-weight-bold text-gray-800">Prochain Trimestre</h5>
+                                    @if(isset($predictions['next_quarter']))
+                                        <div class="stat-value mb-0 {{ $predictions['next_quarter']->predicted_score >= 75 ? 'text-success' : ($predictions['next_quarter']->predicted_score >= 50 ? 'text-warning' : 'text-danger') }}">
+                                            {{ round($predictions['next_quarter']->predicted_score, 1) }}
+                                        </div>
+                                        <div class="small text-muted mt-2">
+                                            Précision: {{ number_format($predictions['next_quarter']->confidence_level * 100, 1) }}%
+                                        </div>
+                                    @else
+                                        <div class="text-muted py-3">Non disponible</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Yearly Prediction -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 card-accent {{ $predictions['next_year'] ? ($predictions['next_year']->predicted_score >= 75 ? 'card-accent-success' : ($predictions['next_year']->predicted_score >= 50 ? 'card-accent-warning' : 'card-accent-danger')) : 'card-accent-primary' }}">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title font-weight-bold text-gray-800">Prochaine Année</h5>
+                                    @if(isset($predictions['next_year']))
+                                        <div class="stat-value mb-0 {{ $predictions['next_year']->predicted_score >= 75 ? 'text-success' : ($predictions['next_year']->predicted_score >= 50 ? 'text-warning' : 'text-danger') }}">
+                                            {{ round($predictions['next_year']->predicted_score, 1) }}
+                                        </div>
+                                        <div class="small text-muted mt-2">
+                                            Précision: {{ number_format($predictions['next_year']->confidence_level * 100, 1) }}%
+                                        </div>
+                                    @else
+                                        <div class="text-muted py-3">Non disponible</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Historique et Prévisions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Période</th>
+                                            <th>Type</th>
+                                            <th>Score</th>
+                                            <th>Tendance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Recent Evaluations (last 5, shown oldest to newest) -->
+                                        @php
+                                            $lastFiveEvaluations = $provider->evaluations->sortByDesc('created_at')->take(5)->sortBy('created_at');
+                                        @endphp
+                                        @forelse($lastFiveEvaluations as $evaluation)
+                                        <tr>
+                                            <td>{{ $evaluation->created_at->format('d/m/Y') }}</td>
+                                            <td><span class="badge bg-secondary">Évaluation</span></td>
+                                            <td>
+                                                <h5 class="mb-0">
+                                                    <span class="badge bg-{{ $evaluation->total_score >= 75 ? 'success' : ($evaluation->total_score >= 50 ? 'warning' : 'danger') }}">
+                                                        {{ number_format($evaluation->total_score, 1) }}
+                                                    </span>
+                                                </h5>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">-</span>
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center">Aucune évaluation disponible</td>
+                                        </tr>
+                                        @endforelse
+
+                                        <!-- Predictions -->
+                                        @php $hasPredictions = false; @endphp
+
+                                        @foreach(['next_month', 'next_quarter', 'next_year'] as $period)
+                                            @if(isset($predictions[$period]) && $predictions[$period])
+                                            @php $hasPredictions = true; @endphp
+                                            <tr class="bg-light">
+                                                <td>
+                                                    {{ $predictions[$period]->prediction_date->format('d/m/Y') }}
+                                                    <div class="small text-muted">{{ $period === 'next_month' ? 'Mensuel' : ($period === 'next_quarter' ? 'Trimestriel' : 'Annuel') }}</div>
+                                                </td>
+                                                <td><span class="badge bg-primary">Prédiction</span></td>
+                                                <td>
+                                                    @if(isset($predictions[$period]->predicted_score))
+                                                    <h5 class="mb-0">
+                                                        <span class="badge bg-{{ $predictions[$period]->predicted_score >= 75 ? 'success' : ($predictions[$period]->predicted_score >= 50 ? 'warning' : ($predictions[$period]->predicted_score > 0 ? 'danger' : 'secondary')) }}">
+                                                            {{ number_format($predictions[$period]->predicted_score, 1) }}
+                                                        </span>
+                                                    </h5>
+                                                    <div class="small text-muted mt-1">Précision: {{ number_format($predictions[$period]->confidence_level * 100, 1) }}%</div>
+                                                    @else
+                                                    <span class="badge bg-secondary">N/A</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if(isset($predictions[$period]->factors) && is_array($predictions[$period]->factors) && isset($predictions[$period]->factors['trend']))
+                                                        @php
+                                                            $trend = $predictions[$period]->factors['trend'];
+                                                        @endphp
+                                                        <span class="badge bg-{{ $trend === 'improving' ? 'success' : ($trend === 'declining' ? 'danger' : 'info') }}">
+                                                            @if($trend === 'improving')
+                                                                <i class="fas fa-arrow-up"></i>
+                                                            @elseif($trend === 'declining')
+                                                                <i class="fas fa-arrow-down"></i>
+                                                            @else
+                                                                <i class="fas fa-minus"></i>
+                                                            @endif
+                                                            {{ $trend === 'improving' ? 'Amélioration' : ($trend === 'declining' ? 'Dégradation' : 'Stable') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            @endif
+                                        @endforeach
+
+                                        @if(!$hasPredictions && $provider->evaluations->isEmpty())
+                                        <tr>
+                                            <td colspan="4" class="text-center">Aucune donnée disponible</td>
+                                        </tr>
+                                        @elseif(!$hasPredictions)
+                                        <tr>
+                                            <td colspan="4" class="text-center">Aucune prédiction disponible</td>
+                                        </tr>
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @if($regressionData && isset($regressionData['slope']))
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-chart-line mr-2"></i>
+                                <strong>Tendance globale:</strong>
+                                {{ $regressionData['slope'] > 0 ? 'En amélioration' : 'En dégradation' }}
+                                ({{ number_format(abs($regressionData['slope']), 3) }} points/mois)
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Info -->
+        <div class="col-lg-4">
+            <!-- Provider Info -->
+            <div class="card mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Informations du prestataire</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Prestataire</h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-2">
-                        <strong>Nom:</strong> {{ $provider->name }}
-                    </div>
-                    <div class="mb-2">
                         <strong>Type:</strong> {{ \App\Models\ServiceProvider::getTypes()[$provider->service_type] ?? $provider->service_type }}
                     </div>
-                    <div class="mb-2">
-                        <strong>Email:</strong> {{ $provider->email }}
-                    </div>
-                    <div class="mb-2">
-                        <strong>Téléphone:</strong> {{ $provider->phone }}
-                    </div>
-                    <div class="mb-2">
-                        <strong>Nombre d'évaluations:</strong>
-                        <span class="badge bg-primary">{{ $provider->evaluations->count() }}</span>
-                        <div class="small text-muted">Toutes les évaluations sont utilisées pour la prévision</div>
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <strong class="mr-2">Évaluations:</strong>
+                            @php
+                                $evaluationsCount = $provider->evaluations->count();
+                                $minRequired = 5;
+                            @endphp
+                            <span class="badge bg-primary">{{ $evaluationsCount }}</span>
+                        </div>
+                        <div class="mt-2 small text-{{ $evaluationsCount >= $minRequired ? 'success' : 'warning' }}">
+                            @if($evaluationsCount >= $minRequired)
+                                <i class="fas fa-check-circle"></i> Suffisant pour prédictions (min. {{ $minRequired }})
+                            @else
+                                <i class="fas fa-exclamation-triangle"></i> Minimum {{ $minRequired }} requis ({{ $evaluationsCount }}/{{ $minRequired }})
+                            @endif
+                        </div>
                     </div>
                     <div class="mb-2">
                         <strong>Dernière évaluation:</strong>
@@ -89,601 +303,156 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Latest Prediction Card -->
-        <div class="col-lg-4 mb-4 equal-height-col">
-            <div class="card shadow mb-4 prediction-card equal-height-card {{ isset($trendInfo['trend']) ? 'trend-'.$trendInfo['trend'] : '' }}">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Prévision actuelle</h6>
-                </div>
-                <div class="card-body">
-                    @if($latestPrediction)
-                        <div class="text-center mb-4">
-                            <h1 class="display-4 font-weight-bold {{ $latestPrediction->predicted_score >= 75 ? 'text-success' : ($latestPrediction->predicted_score >= 50 ? 'text-warning' : 'text-danger') }}">
-                                {{ round($latestPrediction->predicted_score, 1) }}
-                            </h1>
-                            <div class="text-xs text-muted">Score prédit</div>
-                        </div>
-
-                        <div class="mb-2">
-                            <strong>Niveau de précision:</strong>
-                            <div class="progress mt-1" style="height: 5px;">
-                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ $latestPrediction->confidence_level * 100 }}%" aria-valuenow="{{ $latestPrediction->confidence_level * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-xs text-right">{{ round($latestPrediction->confidence_level * 100) }}%</div>
-                        </div>
-
-                        <div class="mb-2">
-                            <strong>Date de prévision:</strong> {{ $latestPrediction->prediction_date->format('d/m/Y') }}
-                        </div>
-
-                        <div class="mb-2">
-                            <strong>Période:</strong>
-                            {{ $latestPrediction->prediction_period == 'next_month' ? 'Mois prochain' : 'Trimestre prochain' }}
-                        </div>
-
-                        <div class="mb-2">
-                            <strong>Tendance:</strong>
-                            @if(isset($trendInfo['trend']))
-                                <span class="badge bg-{{ $trendInfo['status'] }}">
-                                    <i class="fas fa-chart-line"></i>
-                                    {{ $trendInfo['message'] }}
-                                </span>
-                            @else
-                                <span class="text-muted">Non disponible</span>
-                            @endif
-                        </div>
-                    @else
-                        <div class="text-center py-5">
-                            @if($provider->evaluations->count() < 5)
-                                <div class="text-muted">Nombre d'évaluations insuffisant</div>
-                                <div class="small text-muted mt-2">Un minimum de 5 évaluations est requis pour générer une prévision fiable.</div>
-                            @else
-                                <div class="text-muted">Aucune prévision disponible</div>
-                                <a href="{{ route('admin.predictions.generate') }}" class="btn btn-primary mt-3">
-                                    Générer une prévision
-                                </a>
-                            @endif
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <!-- Factors Card -->
-        <div class="col-lg-4 mb-4 equal-height-col">
-            <div class="card shadow mb-4 equal-height-card">
-                <div class="card-header py-3">
+            <!-- Prediction Factors -->
+            @if($latestPrediction && isset($latestPrediction->factors))
+            @php
+                $factors = $latestPrediction->factors;
+            @endphp
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Facteurs d'influence</h6>
+                    <span class="badge bg-info">v{{ $latestPrediction->model_version }}</span>
                 </div>
                 <div class="card-body">
-                    @if($latestPrediction && isset($latestPrediction->factors))
-                        @php
-                            $factors = $latestPrediction->factors;
-                        @endphp
-
-                        <div class="mb-2">
-                            <strong>Pente:</strong>
-                            <span class="{{ $factors['slope'] > 0 ? 'text-success' : ($factors['slope'] < 0 ? 'text-danger' : 'text-muted') }}">
-                                {{ round($factors['slope'], 3) }}
-                            </span>
-                        </div>
-
-                        <div class="mb-2">
-                            <strong>Force de la tendance:</strong>
-                            <div class="progress mt-1" style="height: 5px;">
-                                <div class="progress-bar {{ $factors['trend'] == 'improving' ? 'bg-success' : ($factors['trend'] == 'declining' ? 'bg-danger' : 'bg-info') }}" role="progressbar" style="width: {{ min(100, abs($factors['slope']) * 50) }}%" aria-valuenow="{{ min(100, abs($factors['slope']) * 50) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    <!-- Trend -->
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-chart-line mr-2 text-gray-500"></i>
+                            <strong>Tendance:</strong>
+                            <div class="ml-auto">
+                                <span class="badge bg-{{ $factors['trend'] == 'improving' ? 'success' : ($factors['trend'] == 'declining' ? 'danger' : 'info') }}">
+                                    @if($factors['trend'] == 'improving')
+                                        <i class="fas fa-arrow-up"></i> Amélioration
+                                    @elseif($factors['trend'] == 'declining')
+                                        <i class="fas fa-arrow-down"></i> Dégradation
+                                    @else
+                                        <i class="fas fa-minus"></i> Stable
+                                    @endif
+                                </span>
                             </div>
                         </div>
-
-                        <div class="mb-2">
-                            <strong>Précision du modèle (R²):</strong>
-                            <div class="progress mt-1" style="height: 5px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $factors['r_squared'] * 100 }}%" aria-valuenow="{{ $factors['r_squared'] * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="text-xs text-right">{{ round($factors['r_squared'] * 100, 1) }}%</div>
+                        @if(isset($factors['slope']))
+                        <div class="mt-2 ml-4 small text-muted">
+                            Pente: {{ number_format($factors['slope'], 3) }} points/mois
                         </div>
-
-                        <div class="mb-2">
-                            <strong>Nombre d'évaluations utilisées:</strong>
-                            <span class="badge bg-primary">{{ $factors['evaluations_count'] }}</span>
-                        </div>
-
-                        <div class="mb-2">
-                            <strong>Dernier score:</strong>
-                            <span class="badge bg-{{ $factors['last_score'] >= 75 ? 'success' : ($factors['last_score'] >= 50 ? 'warning' : 'danger') }}">
-                                {{ round($factors['last_score'], 1) }}
-                            </span>
-                        </div>
-
-                        <div class="mb-2">
-                            <strong>Score moyen:</strong>
-                            <span class="badge bg-{{ $factors['avg_score'] >= 75 ? 'success' : ($factors['avg_score'] >= 50 ? 'warning' : 'danger') }}">
-                                {{ round($factors['avg_score'], 1) }}
-                            </span>
-                        </div>
-                    @else
-                        <div class="text-center py-5">
-                            <div class="text-muted">Aucun facteur disponible</div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Performance Chart -->
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Historique et prévision</h6>
-                    <div class="small text-muted">
-                        <i class="fas fa-info-circle"></i> La ligne de tendance montre l'évolution prédite de la performance
+                        @endif
                     </div>
-                </div>
-                <div class="card-body">
-                    <!-- Regression Analysis Info - Permanent -->
-                    @if($regressionData)
-                    <div class="alert alert-info mb-3">
-                        <strong>Analyse de la régression linéaire:</strong>
-                        Pente = {{ number_format($regressionData['slope'], 3) }},
-                        Intercept = {{ number_format($regressionData['intercept'], 3) }}
-                        <div class="mt-1">
-                            Tendance:
-                            @if($regressionData['slope'] > 0)
-                                <span class="text-success"><i class="fas fa-arrow-up"></i> À la hausse</span>
-                            @elseif($regressionData['slope'] < 0)
-                                <span class="text-danger"><i class="fas fa-arrow-down"></i> À la baisse</span>
+
+                    <!-- Change Points -->
+                    @if(isset($factors['change_points']) && is_array($factors['change_points']) && count($factors['change_points']) > 0)
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div>
+                            <i class="fas fa-exchange-alt mr-2 text-gray-500"></i>
+                            <strong>Points de changement:</strong>
+                            <span class="badge bg-secondary ml-2">{{ count($factors['change_points']) }}</span>
+                        </div>
+                        @php
+                            $displayedDates = [];
+                            $displayCount = 0;
+                        @endphp
+                        <div class="mt-2">
+                            @foreach($factors['change_points'] as $cp)
+                                @if(isset($cp['timestamp']) && isset($cp['right_slope']) && isset($cp['left_slope']) && $provider->evaluations->isNotEmpty())
+                                    @php
+                                        $changeDate = \Carbon\Carbon::parse($provider->evaluations->first()->created_at)
+                                            ->addDays($cp['timestamp'] * 30)
+                                            ->format('M Y');
+                                    @endphp
+                                    @if(!in_array($changeDate, $displayedDates) && $displayCount < 2)
+                                        @php
+                                            $displayedDates[] = $changeDate;
+                                            $displayCount++;
+                                        @endphp
+                                        <div class="change-point mt-2">
+                                            <div class="small font-weight-bold">{{ $changeDate }}</div>
+                                            <div class="small {{ $cp['right_slope'] > $cp['left_slope'] ? 'text-success' : 'text-danger' }}">
+                                                @if($cp['right_slope'] > $cp['left_slope'])
+                                                    <i class="fas fa-arrow-up"></i> Amélioration
+                                                @else
+                                                    <i class="fas fa-arrow-down"></i> Dégradation
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Seasonality -->
+                    @if(isset($factors['seasonality_detected']))
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>
+                            <strong>Saisonnalité:</strong>
+                            <div class="ml-auto">
+                                @if($factors['seasonality_detected'])
+                                    <span class="badge bg-info">Détectée</span>
+                                @else
+                                    <span class="badge bg-secondary">Non détectée</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="mt-2 ml-4 small text-muted">
+                            @if($factors['seasonality_detected'])
+                                Variations saisonnières prises en compte dans la prédiction
                             @else
-                                <span class="text-info"><i class="fas fa-equals"></i> Stable</span>
+                                Données insuffisantes ou pas de cycle saisonnier
                             @endif
                         </div>
                     </div>
                     @endif
 
-                    <!-- Clean Regression Line Chart -->
-                    <div id="regressionChartContainer" class="mt-3">
-                        <svg id="regressionChart" width="100%" height="400" style="border: 1px solid #e3e6f0; background-color: #f8f9fc;">
-                            <!-- Y-axis labels -->
-                            <text x="5" y="20" font-size="12" text-anchor="start">100</text>
-                            <text x="5" y="105" font-size="12" text-anchor="start">75</text>
-                            <text x="5" y="190" font-size="12" text-anchor="start">50</text>
-                            <text x="5" y="275" font-size="12" text-anchor="start">25</text>
-                            <text x="5" y="360" font-size="12" text-anchor="start">0</text>
-
-                            <!-- Y-axis line -->
-                            <line x1="30" y1="10" x2="30" y2="370" stroke="#e3e6f0" stroke-width="1"></line>
-
-                            <!-- Horizontal grid lines -->
-                            <line x1="30" y1="20" x2="95%" y2="20" stroke="#e3e6f0" stroke-width="1" stroke-dasharray="5,5"></line>
-                            <line x1="30" y1="105" x2="95%" y2="105" stroke="#e3e6f0" stroke-width="1" stroke-dasharray="5,5"></line>
-                            <line x1="30" y1="190" x2="95%" y2="190" stroke="#e3e6f0" stroke-width="1" stroke-dasharray="5,5"></line>
-                            <line x1="30" y1="275" x2="95%" y2="275" stroke="#e3e6f0" stroke-width="1" stroke-dasharray="5,5"></line>
-                            <line x1="30" y1="360" x2="95%" y2="360" stroke="#e3e6f0" stroke-width="1"></line>
-
-                            <!-- X-axis line -->
-                            <line x1="30" y1="370" x2="95%" y2="370" stroke="#e3e6f0" stroke-width="1"></line>
-
-                            <!-- Axis Titles -->
-                            <!-- Y-axis title -->
-                            <text x="-190" y="15" font-size="14" text-anchor="middle" transform="rotate(-90)" font-weight="bold">Score d'évaluation</text>
-
-                            <!-- X-axis title -->
-                            <text x="50%" y="395" font-size="14" text-anchor="middle" font-weight="bold">Période</text>
-
-                            <!-- Title -->
-                            <text x="50%" y="30" font-size="16" text-anchor="middle" font-weight="bold" fill="#4e73df">Ligne de Régression</text>
-
-                            <!-- Regression line and data points will be added by JavaScript -->
-                        </svg>
+                    <!-- Stats -->
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="small text-muted">Dernier score</div>
+                            <div class="badge bg-{{ $factors['last_score'] >= 75 ? 'success' : ($factors['last_score'] >= 50 ? 'warning' : 'danger') }}">
+                                {{ isset($factors['last_score']) ? number_format($factors['last_score'], 1) : 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-muted">Score moyen</div>
+                            <div class="badge bg-{{ $factors['avg_score'] >= 75 ? 'success' : ($factors['avg_score'] >= 50 ? 'warning' : 'danger') }}">
+                                {{ isset($factors['avg_score']) ? number_format($factors['avg_score'], 1) : 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center small text-muted">
+                        Basé sur {{ $factors['evaluations_count'] ?? 0 }} évaluations
                     </div>
                 </div>
             </div>
+            @endif
+
+            <!-- Accuracy Info -->
+            @if($latestPrediction)
+            <div class="card mb-4 bg-light">
+                <div class="card-body">
+                    <div class="small">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        <strong>À propos du modèle:</strong>
+                        <p class="mt-2 mb-0">
+                            Modèle de prévision avancé utilisant une régression pondérée
+                            @if(isset($latestPrediction->factors['change_points']) && count($latestPrediction->factors['change_points']) > 0)
+                            avec détection des points de changement
+                            @endif
+                            @if(isset($latestPrediction->factors['seasonality_detected']) && $latestPrediction->factors['seasonality_detected'])
+                            et analyse de saisonnalité
+                            @endif.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
 @endsection
 
 @section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Clean regression line chart
-    const chart = document.getElementById('regressionChart');
-    if (!chart) {
-        console.error('Chart element not found');
-        return;
-    }
-
-    // Get regression data
-    const regression = @json($regressionData);
-    console.log('Regression data:', regression);
-
-    // Get evaluation data (actual scores)
-    const evaluationDates = @json($evaluationDates ?? []);
-    const evaluationScores = @json($evaluationScores ?? []);
-    console.log('Evaluation data:', {evaluationDates, evaluationScores, length: evaluationScores?.length || 0});
-
-    // Get prediction data
-    const predictionDates = @json($predictionDates ?? []);
-    const predictionScores = @json($predictionScores ?? []);
-    console.log('Prediction data:', {predictionDates, predictionScores, length: predictionScores?.length || 0});
-
-    // Check if we have sufficient data
-    if (!regression || !regression.dates || regression.dates.length < 2) {
-        chart.innerHTML += '<text x="50%" y="190" text-anchor="middle" dominant-baseline="middle" font-size="14">Données insuffisantes pour afficher le graphique</text>';
-        console.error('Insufficient regression data');
-        return;
-    }
-
-    // MANUALLY ADD SOME SAMPLE DATA FOR TESTING
-    // If both evaluation and prediction data are empty, use sample data
-    let sampleDataAdded = false;
-    if ((!evaluationScores || evaluationScores.length === 0) && (!predictionScores || predictionScores.length === 0)) {
-        console.warn('No data found, using sample data for testing');
-        // Sample evaluation data
-        window.evaluationDates = ['Jan 01', 'Feb 15', 'Mar 30', 'May 15', 'Jun 30'];
-        window.evaluationScores = [65, 70, 62, 58, 55];
-        // Sample prediction data
-        window.predictionDates = ['Jul 15', 'Aug 01'];
-        window.predictionScores = [52, 48];
-
-        // Use windowed variables
-        evaluationDates = window.evaluationDates;
-        evaluationScores = window.evaluationScores;
-        predictionDates = window.predictionDates;
-        predictionScores = window.predictionScores;
-
-        sampleDataAdded = true;
-        console.log('Sample data added for testing', {evaluationDates, evaluationScores, predictionDates, predictionScores});
-    }
-
-    // Set up chart dimensions
-    const pointRadius = 5; // Increased from 4 for better visibility
-    const chartWidth = chart.clientWidth || 800; // Fallback width if clientWidth is 0
-    const chartHeight = 400;
-    const padding = { left: 50, right: 50, top: 50, bottom: 50 };
-    const graphWidth = chartWidth - padding.left - padding.right;
-    const graphHeight = chartHeight - padding.top - padding.bottom;
-
-    console.log('Chart dimensions:', {chartWidth, chartHeight, graphWidth, graphHeight});
-
-    // Build a combined timeline for X-axis (all dates sorted)
-    let allDates = [...(evaluationDates || [])];
-
-    // Only add prediction dates if they exist and are not empty
-    if (predictionDates && predictionDates.length > 0) {
-        allDates = [...allDates, ...predictionDates];
-    }
-
-    console.log('All dates combined:', {allDates, length: allDates.length});
-
-    // Check if we have any dates to work with
-    if (allDates.length < 2) {
-        chart.innerHTML += '<text x="50%" y="190" text-anchor="middle" dominant-baseline="middle" font-size="14">Données insuffisantes pour l\'axe X</text>';
-        console.error('Insufficient date data for X-axis');
-        return;
-    }
-
-    // Scale X-axis based on number of points
-    const xStep = graphWidth / Math.max(allDates.length - 1, 1);
-    console.log('X-axis step:', xStep);
-
-    // ---------------
-    // HARD-CODED RED REGRESSION LINE (GUARANTEED VISIBLE)
-    // ---------------
-    // Use the entire width of the chart for the line to ensure it's visible
-    const hardLineStartX = padding.left;
-    const hardLineEndX = padding.left + graphWidth;
-    const hardLineStartY = padding.top + 100; // Middle of the chart
-    const hardLineEndY = padding.top + 250; // Sloping downward
-
-    const hardcodedLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    hardcodedLine.setAttribute('x1', hardLineStartX);
-    hardcodedLine.setAttribute('y1', hardLineStartY);
-    hardcodedLine.setAttribute('x2', hardLineEndX);
-    hardcodedLine.setAttribute('y2', hardLineEndY);
-    hardcodedLine.setAttribute('stroke', '#e74a3b'); // Red color
-    hardcodedLine.setAttribute('stroke-width', '3');
-    chart.appendChild(hardcodedLine);
-
-    console.log('Hardcoded regression line added:', {hardLineStartX, hardLineStartY, hardLineEndX, hardLineEndY});
-
-    // ---------------
-    // DRAW EVALUATION POINTS AND LINE (BLACK)
-    // ---------------
-    if (evaluationScores && evaluationScores.length > 0) {
-        console.log('Drawing evaluation points:', evaluationScores.length);
-
-        // Draw data points and connect them
-        let pathData = '';
-        const evalGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-
-        evaluationScores.forEach((score, i) => {
-            const x = padding.left + (i * xStep);
-            const y = padding.top + graphHeight - (score * 3.4);
-            console.log(`Evaluation point ${i}:`, {x, y, score});
-
-            // Create circle for evaluation point
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', x);
-            circle.setAttribute('cy', y);
-            circle.setAttribute('r', pointRadius);
-            circle.setAttribute('fill', '#000000');
-            evalGroup.appendChild(circle);
-
-            // Add tooltip
-            const tooltip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-            tooltip.textContent = `Évaluation: ${evaluationDates[i]}, Score: ${score.toFixed(1)}`;
-            circle.appendChild(tooltip);
-
-            // Add score label above each point for extra visibility
-            const scoreLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            scoreLabel.setAttribute('x', x);
-            scoreLabel.setAttribute('y', y - 10);
-            scoreLabel.setAttribute('font-size', '10');
-            scoreLabel.setAttribute('text-anchor', 'middle');
-            scoreLabel.textContent = score.toFixed(1);
-            evalGroup.appendChild(scoreLabel);
-
-            // Add to path data for line
-            if (i === 0) {
-                pathData = `M ${x} ${y}`;
-            } else {
-                pathData += ` L ${x} ${y}`;
-            }
-
-            // Add date labels for first and last points
-            if (i === 0 || i === evaluationScores.length - 1) {
-                const dateLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                dateLabel.setAttribute('x', x);
-                dateLabel.setAttribute('y', chartHeight - 25);
-                dateLabel.setAttribute('font-size', '10');
-                dateLabel.setAttribute('text-anchor', 'middle');
-                dateLabel.textContent = evaluationDates[i];
-                chart.appendChild(dateLabel);
-            }
-        });
-
-        // Add the connected line for evaluations
-        if (evaluationScores.length > 1) {
-            const evalPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            evalPath.setAttribute('d', pathData);
-            evalPath.setAttribute('stroke', '#000000');
-            evalPath.setAttribute('stroke-width', '2');
-            evalPath.setAttribute('fill', 'none');
-            evalGroup.appendChild(evalPath);
-        }
-
-        chart.appendChild(evalGroup);
-    } else {
-        console.warn('No evaluation scores to display');
-    }
-
-    // ---------------
-    // DRAW PREDICTION POINTS AND LINE (GREEN)
-    // ---------------
-    if (predictionDates && predictionDates.length > 0 && predictionScores && predictionScores.length > 0) {
-        console.log('Drawing prediction points:', predictionScores.length);
-
-        const predGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        let predPathData = '';
-
-        // Calculate the starting x position based on evaluations
-        const startX = padding.left + ((evaluationScores?.length || 0) - 1) * xStep;
-
-        predictionScores.forEach((score, i) => {
-            const x = startX + ((i + 1) * xStep);
-            const y = padding.top + graphHeight - (score * 3.4);
-            console.log(`Prediction point ${i}:`, {x, y, score});
-
-            // Create circle for prediction point
-            const predCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            predCircle.setAttribute('cx', x);
-            predCircle.setAttribute('cy', y);
-            predCircle.setAttribute('r', pointRadius);
-            predCircle.setAttribute('fill', '#28a745'); // Green color
-            predGroup.appendChild(predCircle);
-
-            // Add score label above each point for extra visibility
-            const scoreLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            scoreLabel.setAttribute('x', x);
-            scoreLabel.setAttribute('y', y - 10);
-            scoreLabel.setAttribute('font-size', '10');
-            scoreLabel.setAttribute('text-anchor', 'middle');
-            scoreLabel.setAttribute('fill', '#28a745');
-            scoreLabel.textContent = score.toFixed(1);
-            predGroup.appendChild(scoreLabel);
-
-            // Add tooltip
-            const tooltip = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-            tooltip.textContent = `Prédiction: ${predictionDates[i]}, Score: ${score.toFixed(1)}`;
-            predCircle.appendChild(tooltip);
-
-            // Add to path data for line
-            if (i === 0) {
-                // Connect to last evaluation point for continuity
-                if (evaluationScores && evaluationScores.length > 0) {
-                    const lastEvalX = padding.left + ((evaluationScores.length - 1) * xStep);
-                    const lastEvalY = padding.top + graphHeight - (evaluationScores[evaluationScores.length - 1] * 3.4);
-                    predPathData = `M ${lastEvalX} ${lastEvalY} L ${x} ${y}`;
-                } else {
-                    predPathData = `M ${x} ${y}`;
-                }
-            } else {
-                predPathData += ` L ${x} ${y}`;
-            }
-
-            // Add date label for last prediction
-            if (i === predictionScores.length - 1) {
-                const dateLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                dateLabel.setAttribute('x', x);
-                dateLabel.setAttribute('y', chartHeight - 25);
-                dateLabel.setAttribute('font-size', '10');
-                dateLabel.setAttribute('text-anchor', 'middle');
-                dateLabel.textContent = predictionDates[i];
-                chart.appendChild(dateLabel);
-            }
-        });
-
-        // Add the connected line for predictions
-        if (predPathData) {
-            const predPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            predPath.setAttribute('d', predPathData);
-            predPath.setAttribute('stroke', '#28a745'); // Green color
-            predPath.setAttribute('stroke-width', '2');
-            predPath.setAttribute('fill', 'none');
-            predPath.setAttribute('stroke-dasharray', '5,5'); // Dashed line for predictions
-            predGroup.appendChild(predPath);
-        }
-
-        chart.appendChild(predGroup);
-    } else {
-        console.warn('No prediction scores to display');
-    }
-
-    // ---------------
-    // DRAW THE REGRESSION LINE (RED) IF AVAILABLE
-    // ---------------
-    if (regression && regression.scores && regression.scores.length >= 2) {
-        // Use first and last points from regression data
-        const firstScore = regression.scores[0];
-        const lastScore = regression.scores[regression.scores.length - 1];
-
-        const lineStartX = padding.left;
-        const lineEndX = padding.left + graphWidth;
-        const lineStartY = padding.top + graphHeight - (firstScore * 3.4);
-        const lineEndY = padding.top + graphHeight - (lastScore * 3.4);
-
-        console.log('Real regression line coordinates:', {
-            lineStartX, lineStartY, lineEndX, lineEndY,
-            firstScore, lastScore
-        });
-
-        // Create and add regression line to the chart
-        const regressionLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        regressionLine.setAttribute('x1', lineStartX);
-        regressionLine.setAttribute('y1', lineStartY);
-        regressionLine.setAttribute('x2', lineEndX);
-        regressionLine.setAttribute('y2', lineEndY);
-        regressionLine.setAttribute('stroke', '#e74a3b'); // Red color
-        regressionLine.setAttribute('stroke-width', '3');
-        chart.appendChild(regressionLine);
-
-        // Add the endpoint markers for extra visibility
-        const startDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        startDot.setAttribute('cx', lineStartX);
-        startDot.setAttribute('cy', lineStartY);
-        startDot.setAttribute('r', 4);
-        startDot.setAttribute('fill', '#e74a3b');
-        chart.appendChild(startDot);
-
-        const endDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        endDot.setAttribute('cx', lineEndX);
-        endDot.setAttribute('cy', lineEndY);
-        endDot.setAttribute('r', 4);
-        endDot.setAttribute('fill', '#e74a3b');
-        chart.appendChild(endDot);
-    }
-
-    // If sample data was added, show a notification
-    if (sampleDataAdded) {
-        const sampleDataNotice = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        sampleDataNotice.setAttribute('x', '50%');
-        sampleDataNotice.setAttribute('y', '380');
-        sampleDataNotice.setAttribute('text-anchor', 'middle');
-        sampleDataNotice.setAttribute('font-size', '10');
-        sampleDataNotice.setAttribute('fill', '#666');
-        sampleDataNotice.textContent = 'Données d\'exemple affichées pour test';
-        chart.appendChild(sampleDataNotice);
-    }
-
-    // ---------------
-    // ADD LEGEND
-    // ---------------
-    const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    legendGroup.setAttribute('transform', `translate(${padding.left}, ${padding.top})`);
-
-    // Evaluation data legend (black)
-    const evalLegendLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    evalLegendLine.setAttribute('x1', 0);
-    evalLegendLine.setAttribute('y1', 0);
-    evalLegendLine.setAttribute('x2', 20);
-    evalLegendLine.setAttribute('y2', 0);
-    evalLegendLine.setAttribute('stroke', '#000000');
-    evalLegendLine.setAttribute('stroke-width', '2');
-    legendGroup.appendChild(evalLegendLine);
-
-    const evalLegendCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    evalLegendCircle.setAttribute('cx', 10);
-    evalLegendCircle.setAttribute('cy', 0);
-    evalLegendCircle.setAttribute('r', 4);
-    evalLegendCircle.setAttribute('fill', '#000000');
-    legendGroup.appendChild(evalLegendCircle);
-
-    const evalLegendText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    evalLegendText.setAttribute('x', 25);
-    evalLegendText.setAttribute('y', 4);
-    evalLegendText.setAttribute('font-size', '12');
-    evalLegendText.textContent = 'Évaluations';
-    legendGroup.appendChild(evalLegendText);
-
-    // Prediction data legend (green)
-    const predLegendLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    predLegendLine.setAttribute('x1', 0);
-    predLegendLine.setAttribute('y1', 20);
-    predLegendLine.setAttribute('x2', 20);
-    predLegendLine.setAttribute('y2', 20);
-    predLegendLine.setAttribute('stroke', '#28a745');
-    predLegendLine.setAttribute('stroke-width', '2');
-    predLegendLine.setAttribute('stroke-dasharray', '5,5');
-    legendGroup.appendChild(predLegendLine);
-
-    const predLegendCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    predLegendCircle.setAttribute('cx', 10);
-    predLegendCircle.setAttribute('cy', 20);
-    predLegendCircle.setAttribute('r', 4);
-    predLegendCircle.setAttribute('fill', '#28a745');
-    legendGroup.appendChild(predLegendCircle);
-
-    const predLegendText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    predLegendText.setAttribute('x', 25);
-    predLegendText.setAttribute('y', 24);
-    predLegendText.setAttribute('font-size', '12');
-    predLegendText.textContent = 'Prédictions';
-    legendGroup.appendChild(predLegendText);
-
-    // Regression line legend (red)
-    const regLegendLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    regLegendLine.setAttribute('x1', 0);
-    regLegendLine.setAttribute('y1', 40);
-    regLegendLine.setAttribute('x2', 20);
-    regLegendLine.setAttribute('y2', 40);
-    regLegendLine.setAttribute('stroke', '#e74a3b');
-    regLegendLine.setAttribute('stroke-width', '3');
-    legendGroup.appendChild(regLegendLine);
-
-    const regLegendText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    regLegendText.setAttribute('x', 25);
-    regLegendText.setAttribute('y', 44);
-    regLegendText.setAttribute('font-size', '12');
-    regLegendText.textContent = 'Ligne de régression';
-    legendGroup.appendChild(regLegendText);
-
-    chart.appendChild(legendGroup);
-
-    // Add slope info
-    const slopeInfo = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    slopeInfo.setAttribute('x', '50%');
-    slopeInfo.setAttribute('y', '75');
-    slopeInfo.setAttribute('text-anchor', 'middle');
-    slopeInfo.setAttribute('font-size', '16');
-    slopeInfo.setAttribute('font-weight', 'bold');
-    slopeInfo.setAttribute('fill', '#e74a3b');
-    slopeInfo.textContent = 'Pente: ' + (regression.slope ? regression.slope.toFixed(3) : '-0.705');
-    chart.appendChild(slopeInfo);
-});
-</script>
+<!-- No JS required for the static table -->
 @endsection
 

@@ -372,9 +372,23 @@ chatForm.onsubmit = async function(e) {
     }
     // --- Email validation ---
     if (q.key === 'email') {
+        // More comprehensive email validation regex that requires @ and at least one dot in the domain
         let emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        // Additional checks for common email validation issues
+        if (!val.includes('@')) {
+            addBubble("Votre adresse email doit contenir le symbole '@'. Veuillez entrer une adresse email valide.", 'bot');
+            return;
+        }
+
+        if (!val.includes('.')) {
+            addBubble("Votre adresse email doit contenir au moins un point dans le domaine (ex: .com, .fr). Veuillez entrer une adresse email valide.", 'bot');
+            return;
+        }
+
+        // Final comprehensive validation with regex
         if (!emailPattern.test(val)) {
-            addBubble("L'adresse email saisie n'est pas valide. Veuillez entrer une adresse email correcte.", 'bot');
+            addBubble("L'adresse email saisie n'est pas valide. Assurez-vous qu'elle contient un '@' et un domaine valide (ex: exemple@domaine.com).", 'bot');
             return;
         }
     }

@@ -598,6 +598,40 @@ chatForm.addEventListener('submit', function(e) {
     const text = chatInput.value.trim();
     if (!text) return;
 
+    // Email validation
+    if (step < questions.length && questions[step].key === 'email') {
+        // Comprehensive email validation
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        // Basic checks for common email validation issues
+        if (!text.includes('@')) {
+            addBubble("Votre adresse email doit contenir le symbole '@'. Veuillez entrer une adresse email valide.", 'bot');
+            return;
+        }
+
+        if (!text.includes('.')) {
+            addBubble("Votre adresse email doit contenir au moins un point dans le domaine (ex: .com, .fr). Veuillez entrer une adresse email valide.", 'bot');
+            return;
+        }
+
+        const atIndex = text.indexOf('@');
+        if (atIndex === 0) {
+            addBubble("Votre adresse email doit avoir un nom d'utilisateur avant le '@'. Veuillez entrer une adresse email valide.", 'bot');
+            return;
+        }
+
+        if (atIndex === text.length - 1 || !text.substring(atIndex + 1).includes('.')) {
+            addBubble("Votre adresse email doit avoir un domaine valide après le '@' (ex: domaine.com). Veuillez entrer une adresse email valide.", 'bot');
+            return;
+        }
+
+        // Final comprehensive validation
+        if (!emailPattern.test(text)) {
+            addBubble("L'adresse email saisie n'est pas valide. Assurez-vous qu'elle suit le format standard (ex: exemple@domaine.com).", 'bot');
+            return;
+        }
+    }
+
     addBubble(text, 'user');
 
     if (step < questions.length) {

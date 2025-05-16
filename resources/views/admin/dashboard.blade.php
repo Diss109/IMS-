@@ -8,53 +8,36 @@
         <!-- Date Filter Bar -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card shadow">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Filtres de date</h6>
-                    </div>
-                    <div class="card-body">
-                        <!-- Period Filters -->
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Période prédéfinie:</strong></label>
-                            <div class="d-flex flex-wrap" style="gap: 10px;">
-                                <a href="{{ route('admin.dashboard', ['period' => 'week']) }}"
-                                   class="btn btn-outline-primary">
-                                   <i class="fas fa-calendar-week"></i> Cette semaine
-                                </a>
-                                <a href="{{ route('admin.dashboard', ['period' => 'month']) }}"
-                                   class="btn btn-outline-primary">
-                                   <i class="fas fa-calendar-alt"></i> Ce mois
-                                </a>
-                                <a href="{{ route('admin.dashboard', ['period' => 'total']) }}"
-                                   class="btn btn-outline-primary">
-                                   <i class="fas fa-infinity"></i> Tout
-                                </a>
+                <div class="card">
+                    <div class="card-body py-3">
+                        <form action="{{ route('admin.dashboard') }}" method="GET" class="row align-items-end">
+                            <!-- Predefined Periods -->
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label small"><strong>Période prédéfinie</strong></label>
+                                <div class="btn-group w-100" role="group">
+                                    <a href="{{ route('admin.dashboard', ['period' => 'week']) }}" class="btn btn-sm btn-outline-primary">7 jours</a>
+                                    <a href="{{ route('admin.dashboard', ['period' => 'month']) }}" class="btn btn-sm btn-outline-primary">30 jours</a>
+                                    <a href="{{ route('admin.dashboard', ['period' => 'total']) }}" class="btn btn-sm btn-outline-primary">Tout</a>
+                                </div>
                             </div>
-                        </div>
 
-                        <hr>
-
-                        <!-- Custom Date Range -->
-                        <form action="{{ route('admin.dashboard') }}" method="GET">
-                            <div class="mb-3">
-                                <label class="form-label"><strong>Période personnalisée:</strong></label>
-                                <div class="row">
-                                    <div class="col-md-4 mb-2">
-                                        <label for="start_date">Date de début</label>
-                                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request('start_date') }}">
-                                    </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label for="end_date">Date de fin</label>
-                                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request('end_date') }}">
-                                    </div>
-                                    <div class="col-md-4 d-flex align-items-end mb-2">
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-filter"></i> Appliquer
-                                        </button>
-                                        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary ms-2">
-                                            <i class="fas fa-undo"></i> Réinitialiser
-                                        </a>
-                                    </div>
+                            <!-- Custom Date Range -->
+                            <div class="col-md-3 mb-2">
+                                <label for="start_date" class="form-label small">Du</label>
+                                <input type="date" class="form-control form-control-sm" id="start_date" name="start_date" value="{{ request('start_date') }}">
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label for="end_date" class="form-label small">Au</label>
+                                <input type="date" class="form-control form-control-sm" id="end_date" name="end_date" value="{{ request('end_date') }}">
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fas fa-filter"></i> Filtrer
+                                    </button>
+                                    <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-undo"></i>
+                                    </a>
                                 </div>
                             </div>
                         </form>

@@ -72,6 +72,30 @@
         </div>
     </div>
 
+    <div class="row mb-4">
+        <div class="col-12">
+            <form method="GET" action="{{ route('admin.predictions.index') }}" class="d-flex gap-2 align-items-center">
+                <input type="text" name="search" class="form-control" placeholder="Rechercher par nom de prestataire..." value="{{ request('search') }}">
+                <select name="trend" class="form-select">
+                    <option value="">Toutes les tendances</option>
+                    <option value="improving" {{ request('trend') == 'improving' ? 'selected' : '' }}>En amélioration</option>
+                    <option value="declining" {{ request('trend') == 'declining' ? 'selected' : '' }}>En baisse</option>
+                    <option value="stable" {{ request('trend') == 'stable' ? 'selected' : '' }}>Stable</option>
+                </select>
+                <select name="score" class="form-select">
+                    <option value="">Tous les scores</option>
+                    <option value="high" {{ request('score') == 'high' ? 'selected' : '' }}>Score élevé (>= 75)</option>
+                    <option value="medium" {{ request('score') == 'medium' ? 'selected' : '' }}>Score moyen (50-74)</option>
+                    <option value="low" {{ request('score') == 'low' ? 'selected' : '' }}>Score faible (< 50)</option>
+                </select>
+                <button class="btn btn-primary" type="submit">Rechercher</button>
+                @if(request('search') || request('trend') || request('score'))
+                    <a href="{{ route('admin.predictions.index') }}" class="btn btn-secondary">Réinitialiser</a>
+                @endif
+            </form>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12 mb-4">
             <div class="card shadow mb-4">

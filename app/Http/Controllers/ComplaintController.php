@@ -30,6 +30,15 @@ class ComplaintController extends Controller
             Log::info('===== ASSISTANT SUBMISSION =====');
             Log::info('All form data: ' . json_encode($request->all()));
 
+            // Validate email format server-side
+            $email = $request->input('email');
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'L\'adresse email fournie n\'est pas valide. Veuillez vérifier le format de votre email.'
+                ], 422);
+            }
+
             // Check urgency format
             Log::info('Urgency value received: "' . $request->input('urgence') . '"');
 

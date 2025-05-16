@@ -409,11 +409,11 @@
                     <!-- Admin-only links -->
                     <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="fas fa-home sidebar-menu-logo"></i>
-                        <span class="sidebar-link-text">Tableau de bord Admin</span>
+                        <span class="sidebar-link-text">Tableau de bord</span>
                     </a>
                     <a href="{{ route('admin.complaints.index') }}" class="nav-link {{ request()->routeIs('admin.complaints.*') ? 'active' : '' }}">
                         <i class="fas fa-exclamation-triangle sidebar-menu-logo"></i>
-                        <span class="sidebar-link-text">Toutes les réclamations</span>
+                        <span class="sidebar-link-text">Réclamations</span>
                     </a>
                     <a href="{{ route('admin.service-providers.index') }}" class="nav-link {{ request()->routeIs('admin.service-providers.*') ? 'active' : '' }}">
                         <i class="fas fa-truck sidebar-menu-logo"></i>

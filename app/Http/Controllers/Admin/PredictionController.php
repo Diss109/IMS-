@@ -22,19 +22,53 @@ class PredictionController extends Controller
     /**
      * Display the prediction dashboard
      */
-    public function index()
+    public function index(Request $request)
     {
         // Get providers with their latest predictions
-        $providers = ServiceProvider::has('evaluations', '>=', 1)
+        $query = ServiceProvider::has('evaluations', '>=', 1)
             ->withCount('evaluations')
             ->with(['predictions' => function($query) {
                 $query->latest('prediction_date')->limit(1);
-            }])
-            ->paginate(10);
+            }]);
+
+        // Apply search filters
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Apply predictions join if needed for filtering
+        if ($request->has('score') && !empty($request->score)) {
+            $query->whereHas('predictions', function($q) use ($request) {
+                $q->latest('prediction_date')->limit(1);
+
+                switch ($request->score) {
+                    case 'high':
+                        $q->where('predicted_score', '>=', 75);
+                        break;
+                    case 'medium':
+                        $q->where('predicted_score', '>=', 50)
+                          ->where('predicted_score', '<', 75);
+                        break;
+                    case 'low':
+                        $q->where('predicted_score', '<', 50);
+                        break;
+                }
+            });
+        }
+
+        // Get paginated results
+        $providers = $query->paginate(10)->withQueryString();
 
         // Enhance with trend information
         foreach ($providers as $provider) {
             $provider->trend = $this->predictionService->getTrendInfo($provider);
+        }
+
+        // Filter by trend if requested
+        if ($request->has('trend') && !empty($request->trend)) {
+            $providers = $providers->filter(function($provider) use ($request) {
+                return isset($provider->trend['trend']) && $provider->trend['trend'] === $request->trend;
+            });
         }
 
         // Get some stats for the dashboard
@@ -61,7 +95,7 @@ class PredictionController extends Controller
         $provider = ServiceProvider::with(['evaluations' => function($query) {
                 $query->orderBy('created_at', 'asc');
             }, 'predictions' => function($query) {
-                $query->orderBy('prediction_date', 'desc')->limit(5);
+                $query->orderBy('prediction_date', 'desc');
             }])
             ->findOrFail($id);
 
@@ -74,22 +108,60 @@ class PredictionController extends Controller
             $evaluationScores[] = $evaluation->total_score;
         }
 
+        // Group predictions by period
+        $predictions = [
+            'next_month' => null,
+            'next_quarter' => null,
+            'next_year' => null
+        ];
+
+        foreach ($provider->predictions as $prediction) {
+            if (!isset($predictions[$prediction->prediction_period]) ||
+                $predictions[$prediction->prediction_period] === null) {
+                $predictions[$prediction->prediction_period] = $prediction;
+            }
+        }
+
+        // Debug prediction data with more details
+        foreach ($predictions as $period => $prediction) {
+            if ($prediction) {
+                // Dump full prediction object to log for debugging
+                \Illuminate\Support\Facades\Log::debug("Prediction for $period: ", [
+                    'id' => $prediction->id,
+                    'provider_id' => $prediction->service_provider_id,
+                    'period' => $prediction->prediction_period,
+                    'score' => $prediction->predicted_score,
+                    'confidence' => $prediction->confidence_level,
+                    'date' => $prediction->prediction_date->format('Y-m-d'),
+                    'has_factors' => isset($prediction->factors),
+                    'factors_type' => isset($prediction->factors) ? gettype($prediction->factors) : 'null',
+                    'factors' => $prediction->factors
+                ]);
+            } else {
+                \Illuminate\Support\Facades\Log::debug("No prediction for $period");
+            }
+        }
+
         // Add predictions to the chart data
         $predictionDates = [];
         $predictionScores = [];
         $predictionConfidence = [];
+        $predictionPeriods = [];
 
-        foreach ($provider->predictions as $prediction) {
-            $predictionDates[] = $prediction->prediction_date->format('M d');
-            $predictionScores[] = $prediction->predicted_score;
-            $predictionConfidence[] = $prediction->confidence_level * 100;
+        foreach ($predictions as $period => $prediction) {
+            if ($prediction) {
+                $predictionDates[] = $prediction->prediction_date->format('M d');
+                $predictionScores[] = $prediction->predicted_score;
+                $predictionConfidence[] = $prediction->confidence_level * 100;
+                $predictionPeriods[] = $period;
+            }
         }
 
         // Get trend info
         $trendInfo = $this->predictionService->getTrendInfo($provider);
 
-        // Get detailed data for the latest prediction
-        $latestPrediction = $provider->predictions->first();
+        // Get detailed data for the latest prediction (monthly)
+        $latestPrediction = $predictions['next_month'];
 
         // Calculate regression line for chart
         $regressionData = $this->calculateRegressionLine($provider->evaluations);
@@ -102,8 +174,10 @@ class PredictionController extends Controller
             'predictionDates',
             'predictionScores',
             'predictionConfidence',
+            'predictionPeriods',
             'trendInfo',
-            'regressionData'
+            'regressionData',
+            'predictions'
         ));
     }
 
@@ -117,6 +191,23 @@ class PredictionController extends Controller
 
         return redirect()->route('admin.predictions.index')
             ->with('success', "Prévisions générées: {$stats['success']} avec succès, {$stats['failed']} échouées, {$stats['no_data']} sans données suffisantes.");
+    }
+
+    /**
+     * Regenerate predictions for a specific provider after evaluation
+     */
+    public function regenerateForProvider($id)
+    {
+        $provider = ServiceProvider::findOrFail($id);
+        $result = $this->predictionService->regenerateAllPredictionsForProvider($provider);
+
+        if ($result['success']) {
+            return redirect()->route('admin.predictions.show', $id)
+                ->with('success', 'Nouvelles prévisions générées avec succès pour les trois périodes (mois, trimestre, année).');
+        } else {
+            return redirect()->route('admin.predictions.show', $id)
+                ->with('error', $result['message'] ?? 'Erreur lors de la génération des prévisions.');
+        }
     }
 
     /**
@@ -152,7 +243,7 @@ class PredictionController extends Controller
     }
 
     /**
-     * Generate regression line data points for chart
+     * Calculate regression line data points for chart
      */
     private function calculateRegressionLine($evaluations)
     {
@@ -164,67 +255,61 @@ class PredictionController extends Controller
         $firstDate = $evaluations->first()->created_at;
         $lastDate = $evaluations->last()->created_at;
 
-        // Calculate x and y values for linear regression
-        $x = []; // days since first evaluation
-        $y = []; // scores
-        $dates = []; // actual dates for chart
+        // Prepare data for advanced forecasting
+        $dates = [];
+        $scores = [];
+        $timestamps = [];
 
         foreach ($evaluations as $evaluation) {
-            $days = $firstDate->diffInDays($evaluation->created_at);
-            $x[] = $days;
-            $y[] = $evaluation->total_score;
-            $dates[] = $evaluation->created_at->format('M d');
+            $dates[] = $evaluation->created_at;
+            $scores[] = $evaluation->total_score;
+            $timestamps[] = $evaluation->created_at->diffInDays($firstDate) / 30; // Convert to months
         }
 
-        // Calculate linear regression parameters
-        $n = count($x);
-        $sumX = array_sum($x);
-        $sumY = array_sum($y);
-        $sumXY = 0;
-        $sumXX = 0;
-
-        for ($i = 0; $i < $n; $i++) {
-            $sumXY += ($x[$i] * $y[$i]);
-            $sumXX += ($x[$i] * $x[$i]);
-        }
-
-        // Calculate slope and y-intercept
-        $denominator = ($n * $sumXX - $sumX * $sumX);
-        if ($denominator == 0) {
-            // If denominator is zero, use horizontal line at average
-            $slope = 0;
-            $yIntercept = $sumY / $n;
-        } else {
-            $slope = ($n * $sumXY - $sumX * $sumY) / $denominator;
-            $yIntercept = ($sumY - $slope * $sumX) / $n;
-        }
+        // Use service to get more sophisticated trend info
+        $predictionService = app(PredictionService::class);
+        list(, , $factors) = $predictionService->calculateForecast($evaluations);
 
         // Generate regression line points for chart
-        // Create points along the line
+        // Create evenly spaced points along the regression line
         $regLineX = []; // dates for chart
         $regLineY = []; // calculated y values
 
-        // Add days for future projection (at least 90 days)
-        $totalDays = max(90, $firstDate->diffInDays($lastDate) + 90);
-        $interval = max(1, floor($totalDays / 10)); // ensure interval is at least 1
+        // Generate enough points for a smooth line (use 10 points)
+        $totalDays = max(90, $firstDate->diffInDays($lastDate) + 30);
 
-        // Always include the first date (with the actual first evaluation date)
+        // Always include the first point (at day 0)
         $regLineX[] = $firstDate->format('M d');
-        $regLineY[] = max(0, min(100, $yIntercept)); // constraints to 0-100
+        $regLineY[] = max(0, min(100, $factors['intercept'])); // constrain to 0-100
 
-        // Add evenly spaced points for the line
+        // Add evenly spaced points for the line, accounting for change points
         for ($i = 1; $i <= 10; $i++) {
-            $days = $i * $interval;
+            $days = ($i / 10) * $totalDays;
+            $monthValue = $days / 30; // Convert to months for prediction
+
+            // Calculate trend value at this point
+            $score = $factors['slope'] * $monthValue + $factors['intercept'];
+
+            // Apply change point effects if available
+            if (isset($factors['change_points']) && !empty($factors['change_points'])) {
+                foreach ($factors['change_points'] as $cp) {
+                    if ($monthValue > $cp['timestamp']) {
+                        $slopeDiff = $cp['right_slope'] - $cp['left_slope'];
+                        $score += $slopeDiff * ($monthValue - $cp['timestamp']) * 0.5;
+                    }
+                }
+            }
+
             $regLineX[] = $firstDate->copy()->addDays($days)->format('M d');
-            $score = max(0, min(100, $slope * $days + $yIntercept)); // constrain to 0-100
-            $regLineY[] = round($score, 1);
+            $regLineY[] = max(0, min(100, round($score, 1))); // constrain to 0-100
         }
 
         return [
             'dates' => $regLineX,
             'scores' => $regLineY,
-            'slope' => $slope,
-            'intercept' => $yIntercept
+            'slope' => $factors['slope'],
+            'intercept' => $factors['intercept'],
+            'change_points' => $factors['change_points'] ?? []
         ];
     }
 }

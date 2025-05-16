@@ -182,6 +182,7 @@ Route::middleware(['web'])->group(function () {
         Route::post('predictions/generate', [\App\Http\Controllers\Admin\PredictionController::class, 'generateAll'])->name('predictions.generate');
         Route::post('predictions/{id}/generate', [\App\Http\Controllers\Admin\PredictionController::class, 'generateForProvider'])->name('predictions.generate.provider');
         Route::get('predictions/{id}/debug-chart', [\App\Http\Controllers\Admin\PredictionController::class, 'debugChartData'])->name('predictions.debug.chart');
+        Route::get('predictions/{id}/regenerate', [\App\Http\Controllers\Admin\PredictionController::class, 'regenerateForProvider'])->name('predictions.regenerate');
 
         // Notifications
         Route::post('/notifications/delete', [App\Http\Controllers\NotificationController::class, 'destroy'])->middleware(['auth']);
